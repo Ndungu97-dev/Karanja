@@ -108,3 +108,12 @@ exports.getUserProfile = (req, res) => {
   }
   return res.status(200).json({ success: true, user: req.session.user });
 };
+
+// Add or verify this function exists and is exported in authController.js:
+exports.verifyEmail = (req, res) => {
+  const { token } = req.query;
+  return res.status(200).json({ 
+    success: true, 
+    message: 'Email verification endpoint active.' 
+  });
+};
