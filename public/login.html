@@ -43,6 +43,7 @@
 
   <script src="/js/app.js"></script>
   <script>
+    
     async function handleLogin(e) {
       e.preventDefault();
       const body = {
@@ -66,6 +67,49 @@
         alert('Login failed.');
       }
     }
+    let pendingEmail = '';
+
+async function handleLogin(event) {
+  event.preventDefault();
+  const email = document.getElementById('login-email').value;
+  const password = document.getElementById('login-password').value;
+
+  const res = await fetch('/api/auth/login', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, password })
+  });
+  const data = await res.json();
+
+  if (data.success && data.requiresOtp) {
+    pendingEmail = data.email;
+    document.getElementById('password-login-form').classList.add('hidden');
+    document.getElementById('otp-verification-form').classList.remove('hidden');
+    showToast('OTP code sent to your email.');
+  } else {
+    showToast(data.message || 'Login failed', 'error');
+  }
+}
+
+async function handleVerifyOtp(event) {
+  event.preventDefault();
+  const otp = document.getElementById('otp-code-input').value;
+
+  const res = await fetch('/api/auth/verify-otp', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email: pendingEmail, otp })
+  });
+  const data = await res.json();
+
+  if (data.success) {
+    showToast('Login successful! Redirecting...');
+    setTimeout(() => window.location.href = 'dashboard.html', 1000);
+  } else {
+    showToast(data.message || 'Invalid OTP', 'error');
+  }
+}
+
   </script>
 </body>
 </html>
