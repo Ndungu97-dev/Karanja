@@ -1,140 +1,110 @@
-const { validationResult } = require('express-validator');
-const bcrypt = require('bcryptjs');
-const { v4: uuidv4 } = require('uuid');
 const nodemailer = require('nodemailer');
+const bcrypt = require('bcryptjs');
 
-const usersDB = []; // Replace with database model (MongoDB/PostgreSQL)
+// In-memory user store (or connect to your database)
+const users = []; // Temporary mock storage if not using DB yet
 
+// Configure Nodemailer transporter (e.g., using Gmail or SMTP)
 const transporter = nodemailer.createTransport({
-  service: 'gmail',
+  service: 'gmail', // Or use host/port for custom SMTP
   auth: {
-    user: process.env.EMAIL_USER || 'your-email@gmail.com',
-    pass: process.env.EMAIL_PASS || 'your-app-password'
+    user: process.env.EMAIL_USER, // Your email address in environment variables
+    pass: process.env.EMAIL_PASS  // Your email app password
   }
 });
 
-// Registration
+// --- REGISTRATION ---
 exports.registerUser = async (req, res) => {
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) return res.status(400).json({ success: false, errors: errors.array() });
-
-  const { fullName, email, password, role = 'student' } = req.body;
-
-  try {
-    if (usersDB.find(u => u.email === email)) {
-      return res.status(400).json({ success: false, message: 'Email already registered.' });
-    }
-
-    const hashedPassword = await bcrypt.hash(password, 10);
-    const verificationToken = uuidv4();
-
-    const newUser = {
-      id: uuidv4(),
-      fullName,
-      email,
-      password: hashedPassword,
-      role,
-      isVerified: false,
-      verificationToken,
-      otpCode: null,
-      otpExpires: null
-    };
-
-    usersDB.push(newUser);
-
-    const verificationLink = `http://localhost:3000/api/auth/verify-email?token=${verificationToken}`;
-    await transporter.sendMail({
-      from: '"Karanja Cyber Academy" <no-reply@karanjacyber.com>',
-      to: email,
-      subject: 'Verify Your Email Address',
-      html: `<h2>Welcome, ${fullName}!</h2><p>Click <a href="${verificationLink}">here</a> to activate your account.</p>`
-    });
-
-    return res.status(200).json({ success: true, message: 'Registration successful! Check your email to verify.' });
-  } catch (err) {
-    return res.status(500).json({ success: false, message: 'Server registration error.' });
+  const { fullName, email, password } = req.body;
+  
+  if (!fullName || !email || !password) {
+    return res.status(400).json({ success: false, message: 'All fields are required.' });
   }
+
+  const existingUser = users.find(u => u.email === email);
+  if (existingUser) {
+    return res.status(400).json({ success: false, message: 'Email is already registered.' });
+  }
+
+  const hashedPassword = await bcrypt.hash(password, 10);
+  const newUser = { fullName, email, password: hashedPassword, role: 'student', otp: null, otpExpiry: null };
+  users.push(newUser);
+
+  // Send Welcome Email
+  try {
+    await transporter.sendMail({
+      from: `"Karanja Cyber Academy" <${process.env.EMAIL_USER}>`,
+      to: email,
+      subject: 'Welcome to Karanja Cyber Solutions & Academy',
+      html: `<h3>Hello ${fullName},</h3><p>Your account has been successfully created. Welcome to our cloud & cybersecurity academy platform!</p>`
+    });
+  } catch (mailErr) {
+    console.error('Welcome email failed to send:', mailErr.message);
+  }
+
+  return res.status(200).json({ success: true, message: 'Registration successful! Welcome email sent.' });
 };
 
-// Email Verification
-exports.verifyEmail = (req, res) => {
-  const { token } = req.query;
-  const user = usersDB.find(u => u.verificationToken === token);
-  if (!user) return res.status(400).send('Invalid or expired token.');
-
-  user.isVerified = true;
-  user.verificationToken = null;
-  return res.send('<h2>Email verified successfully! You can now log in.</h2><a href="/login.html">Proceed to Login</a>');
-};
-
-// Login Step 1: Password Check & Send OTP
+// --- LOGIN STEP 1 (Generate & Email OTP) ---
 exports.loginStepOne = async (req, res) => {
   const { email, password } = req.body;
-  const user = usersDB.find(u => u.email === email);
+  const user = users.find(u => u.email === email);
 
   if (!user || !(await bcrypt.compare(password, user.password))) {
     return res.status(400).json({ success: false, message: 'Invalid email or password.' });
   }
 
-  if (!user.isVerified) {
-    return res.status(403).json({ success: false, message: 'Please verify your email before logging in.' });
+  // Generate 6-digit OTP
+  const otp = Math.floor(100000 + Math.random() * 900000).toString();
+  user.otp = otp;
+  user.otpExpiry = Date.now() + 10 * 60 * 1000; // Valid for 10 minutes
+
+  // Send OTP Email
+  try {
+    await transporter.sendMail({
+      from: `"Karanja Cyber Academy Security" <${process.env.EMAIL_USER}>`,
+      to: email,
+      subject: 'Your Login Security OTP Code',
+      html: `<h3>Authentication Verification</h3><p>Your 6-digit login OTP code is: <b style="font-size: 18px; color: #06b6d4;">${otp}</b></p><p>This code expires in 10 minutes.</p>`
+    });
+  } catch (mailErr) {
+    console.error('OTP email failed to send:', mailErr.message);
+    return res.status(500).json({ success: false, message: 'Failed to dispatch OTP email.' });
   }
 
-  // Generate 6-digit OTP code
-  const otp = Math.floor(100000 + Math.random() * 900000).toString();
-  user.otpCode = otp;
-  user.otpExpires = Date.now() + 10 * 60 * 1000; // 10 minutes expiry
-
-  await transporter.sendMail({
-    from: '"Karanja Cyber Academy" <no-reply@karanjacyber.com>',
-    to: email,
-    subject: 'Your Secure Login OTP Code',
-    html: `<h3>Security Verification</h3><p>Your 2FA login code is: <b>${otp}</b></p><p>Valid for 10 minutes.</p>`
-  });
-
-  return res.status(200).json({ 
-    success: true, 
-    requiresOtp: true, 
-    email: user.email,
-    message: 'Password verified. Enter the 6-digit OTP sent to your email.' 
-  });
+  return res.status(200).json({ success: true, message: 'Password verified. 6-digit OTP sent to your email.' });
 };
 
-// Login Step 2: Verify OTP & Issue Session
+// --- LOGIN STEP 2 (Verify OTP & Start Session) ---
 exports.verifyOtpAndLogin = (req, res) => {
   const { email, otp } = req.body;
-  const user = usersDB.find(u => u.email === email);
+  const user = users.find(u => u.email === email);
 
-  if (!user || user.otpCode !== otp || Date.now() > user.otpExpires) {
+  if (!user || user.otp !== otp || Date.now() > user.otpExpiry) {
     return res.status(400).json({ success: false, message: 'Invalid or expired OTP code.' });
   }
 
-  // Clear OTP token after use
-  user.otpCode = null;
-  user.otpExpires = null;
+  // Clear OTP and set session
+  user.otp = null;
+  user.otpExpiry = null;
+  req.session.user = { fullName: user.fullName, email: user.email, role: user.role };
 
-  // Create active session
-  req.session.user = {
-    id: user.id,
-    fullName: user.fullName,
-    email: user.email,
-    role: user.role
-  };
-
-  return res.status(200).json({ success: true, message: 'Login complete!', user: req.session.user });
+  return res.status(200).json({ success: true, message: 'Login verified successfully!' });
 };
 
-// Logout
+// --- LOGOUT ---
 exports.logoutUser = (req, res) => {
   req.session.destroy(err => {
-    if (err) return res.status(500).json({ success: false, message: 'Logout failed.' });
+    if (err) return res.status(500).json({ success: false, message: 'Could not log out.' });
     res.clearCookie('connect.sid');
     return res.status(200).json({ success: true, message: 'Logged out successfully.' });
   });
 };
 
-// User Profile Check
+// --- USER PROFILE ---
 exports.getUserProfile = (req, res) => {
-  if (!req.session.user) return res.status(401).json({ success: false, message: 'Unauthorized' });
+  if (!req.session.user) {
+    return res.status(401).json({ success: false, message: 'Unauthorized session.' });
+  }
   return res.status(200).json({ success: true, user: req.session.user });
 };
