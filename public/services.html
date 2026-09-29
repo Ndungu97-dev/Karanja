@@ -1,85 +1,88 @@
 <!DOCTYPE html>
-<html lang="en" class="dark">
+<html lang="en" class="dark scroll-smooth">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Cyber Services | Karanja Cyber Solutions</title>
+  <title>Services | Karanja Cyber Solutions</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 </head>
 <body class="bg-slate-950 text-slate-100 font-sans">
-<!-- TOP EMERGENCY & CONTACT BAR -->
-<div class="bg-slate-950 border-b border-cyan-500/20 py-2 px-4 text-xs font-mono text-slate-300">
-  <div class="max-w-7xl mx-auto flex flex-wrap justify-between items-center gap-2">
-    <div class="flex items-center space-x-4">
-      <span><i class="fa-solid fa-phone text-cyan-400"></i> Call/WhatsApp: <a href="tel:0714436151" class="text-cyan-300 font-bold hover:underline">0714436151</a></span>
-      <span class="hidden md:inline text-slate-500">|</span>
-      <span class="hidden md:inline"><i class="fa-solid fa-shield-halved text-cyan-400"></i> OWASP Top 10 Hardened</span>
-    </div>
-    <div class="flex items-center space-x-3">
-      <button onclick="requestPushPermission()" class="text-cyan-400 hover:text-cyan-300 flex items-center gap-1 transition">
-        <i class="fa-solid fa-bell"></i> Enable Security Alerts
-      </button>
-    </div>
-  </div>
-</div>
 
-<!-- NAVIGATION BAR -->
-<header class="sticky top-0 z-40 bg-slate-950/90 backdrop-blur-md border-b border-slate-800">
-  <nav class="max-w-7xl mx-auto px-4 h-20 flex items-center justify-between">
-    <a href="/" class="flex items-center space-x-3">
-      <div class="w-10 h-10 rounded-xl bg-cyan-500/10 border border-cyan-500/40 flex items-center justify-center text-cyan-400">
-        <i class="fa-solid fa-terminal text-lg"></i>
-      </div>
-      <span class="text-xl font-bold tracking-tight text-white">KARANJA <span class="text-cyan-400">CYBER</span></span>
-    </a>
+  <!-- Dynamic Mounting Anchors -->
+  <div id="shared-header"></div>
+  <div id="shared-modals"></div>
+  <div id="shared-cart-drawer"></div>
 
-    <div class="hidden lg:flex items-center space-x-8 text-sm font-medium">
-      <a href="/" class="text-slate-300 hover:text-cyan-400 transition">Home</a>
-      <a href="about.html" class="text-slate-300 hover:text-cyan-400 transition">About Us</a>
-      <a href="services.html" class="text-slate-300 hover:text-cyan-400 transition">Services</a>
-      <a href="shop.html" class="text-slate-300 hover:text-cyan-400 transition">Academy (20 Courses)</a>
-      <a href="contact.html" class="text-slate-300 hover:text-cyan-400 transition">Contact</a>
-    </div>
-
-    <!-- Dynamic Auth Buttons -->
-    <div id="authNavButtons" class="flex items-center space-x-3">
-      <button onclick="openModal('loginModal')" class="text-xs font-semibold px-4 py-2 rounded-lg border border-slate-700 text-slate-200 hover:border-cyan-500 hover:text-cyan-400 transition">Login</button>
-      <button onclick="openModal('registerModal')" class="text-xs font-bold px-4 py-2 rounded-lg bg-cyan-500 hover:bg-cyan-400 text-slate-950 transition">Register</button>
-    </div>
-    <div id="userNavProfile" class="hidden flex items-center space-x-3">
-      <span id="navUserName" class="text-xs text-cyan-400 font-mono"></span>
-      <button onclick="logoutUser()" class="text-xs font-semibold px-3 py-1.5 rounded bg-red-500/20 text-red-400 hover:bg-red-500/30 transition">Logout</button>
-    </div>
-  </nav>
-</header>
-
-  <section class="py-20">
-    <div class="max-w-7xl mx-auto px-4">
-      <h1 class="text-4xl font-extrabold text-white text-center mb-12">Enterprise Security Services</h1>
-      <div class="grid md:grid-cols-3 gap-8">
-        <div class="bg-slate-900 p-6 rounded-2xl border border-slate-800">
-          <img src="https://images.unsplash.com/photo-1563986768609-322da13575f3?auto=format&fit=crop&w=600&q=80" class="w-full h-44 object-cover rounded-xl mb-6">
-          <h3 class="text-xl font-bold text-white mb-2">Penetration Testing</h3>
-          <p class="text-slate-400 text-sm mb-4">Web, API, and network vulnerability assessment & ethical hacking.</p>
-          <a href="contact.html" class="text-cyan-400 font-semibold text-sm">Request Service &rarr;</a>
-        </div>
-        <div class="bg-slate-900 p-6 rounded-2xl border border-slate-800">
-          <img src="https://images.unsplash.com/photo-1558494949-ef010cbdcc31?auto=format&fit=crop&w=600&q=80" class="w-full h-44 object-cover rounded-xl mb-6">
-          <h3 class="text-xl font-bold text-white mb-2">SOC & SIEM Operations</h3>
-          <p class="text-slate-400 text-sm mb-4">24/7 Security Operations Center monitoring powered by Wazuh SIEM.</p>
-          <a href="contact.html" class="text-cyan-400 font-semibold text-sm">Request Service &rarr;</a>
-        </div>
-        <div class="bg-slate-900 p-6 rounded-2xl border border-slate-800">
-          <img src="https://images.unsplash.com/photo-1544197150-b99a580bb7a8?auto=format&fit=crop&w=600&q=80" class="w-full h-44 object-cover rounded-xl mb-6">
-          <h3 class="text-xl font-bold text-white mb-2">Cloud Security Hardening</h3>
-          <p class="text-slate-400 text-sm mb-4">Azure Bicep & AWS security auditing, IAM policies, and container isolation.</p>
-          <a href="contact.html" class="text-cyan-400 font-semibold text-sm">Request Service &rarr;</a>
-        </div>
-      </div>
+  <!-- SERVICES HEADER -->
+  <section class="py-16 border-b border-slate-800 bg-slate-900/40">
+    <div class="max-w-7xl mx-auto px-4 text-center">
+      <h1 class="text-4xl font-extrabold text-white mb-4">Enterprise Cybersecurity Services</h1>
+      <p class="text-slate-400 max-w-2xl mx-auto text-sm">
+        Offensive testing, proactive security monitoring, and cloud system hardening engineered for complete resilience.
+      </p>
     </div>
   </section>
 
+  <!-- SERVICES LIST -->
+  <section class="py-16">
+    <div class="max-w-7xl mx-auto px-4 grid md:grid-cols-3 gap-8">
+      
+      <div class="bg-slate-900 rounded-2xl border border-slate-800 overflow-hidden flex flex-col justify-between">
+        <div>
+          <img src="https://images.unsplash.com/photo-1563986768609-322da13575f3?auto=format&fit=crop&w=600&q=80" alt="Penetration Testing" class="w-full h-48 object-cover">
+          <div class="p-6">
+            <h3 class="text-lg font-bold text-white mb-2">Penetration Testing & Audits</h3>
+            <p class="text-slate-400 text-xs leading-relaxed">
+              In-depth security testing across web applications, REST APIs, and network endpoints using tools like Burp Suite, Nuclei, and Caido.
+            </p>
+          </div>
+        </div>
+        <div class="p-6 border-t border-slate-800">
+          <a href="contact.html" class="w-full py-2.5 rounded-lg bg-slate-950 border border-slate-700 hover:border-cyan-500 text-cyan-400 text-xs font-bold transition flex items-center justify-center gap-2">
+            <span>Request Consultation</span> <i class="fa-solid fa-arrow-right"></i>
+          </a>
+        </div>
+      </div>
+
+      <div class="bg-slate-900 rounded-2xl border border-slate-800 overflow-hidden flex flex-col justify-between">
+        <div>
+          <img src="https://images.unsplash.com/photo-1558494949-ef010cbdcc31?auto=format&fit=crop&w=600&q=80" alt="SOC & SIEM Operations" class="w-full h-48 object-cover">
+          <div class="p-6">
+            <h3 class="text-lg font-bold text-white mb-2">SOC & Threat Monitoring</h3>
+            <p class="text-slate-400 text-xs leading-relaxed">
+              24/7 endpoint detection, event log processing, YARA detection rules, and security incident monitoring powered by Wazuh SIEM.
+            </p>
+          </div>
+        </div>
+        <div class="p-6 border-t border-slate-800">
+          <a href="contact.html" class="w-full py-2.5 rounded-lg bg-slate-950 border border-slate-700 hover:border-cyan-500 text-cyan-400 text-xs font-bold transition flex items-center justify-center gap-2">
+            <span>Request Consultation</span> <i class="fa-solid fa-arrow-right"></i>
+          </a>
+        </div>
+      </div>
+
+      <div class="bg-slate-900 rounded-2xl border border-slate-800 overflow-hidden flex flex-col justify-between">
+        <div>
+          <img src="https://images.unsplash.com/photo-1544197150-b99a580bb7a8?auto=format&fit=crop&w=600&q=80" alt="Cloud Infrastructure Security" class="w-full h-48 object-cover">
+          <div class="p-6">
+            <h3 class="text-lg font-bold text-white mb-2">Cloud System Hardening</h3>
+            <p class="text-slate-400 text-xs leading-relaxed">
+              Hardening cloud configurations for Azure and AWS, container isolation with Docker, and automated security deployments using Bicep.
+            </p>
+          </div>
+        </div>
+        <div class="p-6 border-t border-slate-800">
+          <a href="contact.html" class="w-full py-2.5 rounded-lg bg-slate-950 border border-slate-700 hover:border-cyan-500 text-cyan-400 text-xs font-bold transition flex items-center justify-center gap-2">
+            <span>Request Consultation</span> <i class="fa-solid fa-arrow-right"></i>
+          </a>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- SHARED JS ENGINE -->
   <script src="/js/app.js"></script>
 </body>
 </html>
