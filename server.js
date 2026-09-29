@@ -1,10 +1,11 @@
 /**
  * Karanja Cyber Solutions - Production Core Server
- * OWASP Top 10 Hardened Architecture
+ * OWASP Top 10 Hardened Architecture (Fail-Safe Static Routing)
  */
 
 const express = require('express');
 const path = require('path');
+const fs = require('fs');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const { body, validationResult } = require('express-validator');
@@ -13,9 +14,7 @@ const winston = require('winston');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// ==========================================
-// OWASP A09: Security Logging & Audit Trail
-// ==========================================
+// OWASP A09: Security Logging (Console transport for cloud compatibility)
 const logger = winston.createLogger({
   level: 'info',
   format: winston.format.combine(
@@ -23,14 +22,11 @@ const logger = winston.createLogger({
     winston.format.json()
   ),
   transports: [
-    new winston.transports.Console(),
-    new winston.transports.File({ filename: 'logs/security-audit.log' })
+    new winston.transports.Console()
   ]
 });
 
-// ==========================================
-// OWASP A05: Security Misconfiguration (Helmet Security Headers)
-// ==========================================
+// OWASP A05: Security Misconfiguration (Helmet Headers)
 app.use(
   helmet({
     contentSecurityPolicy: {
@@ -44,39 +40,37 @@ app.use(
       }
     },
     crossOriginEmbedderPolicy: false,
-    xPoweredBy: false // Hides "X-Powered-By: Express"
+    xPoweredBy: false
   })
 );
 
-// Body Parsing with Payload Limits (Defends against Buffer Overflows & DoS)
 app.use(express.json({ limit: '10kb' }));
 app.use(express.urlencoded({ extended: true, limit: '10kb' }));
 
-// Static Asset Serving
-app.use(express.static(path.join(__dirname, 'public')));
+// Static Asset Serving (Checks 'public/' subfolder AND root directory)
+if (fs.existsSync(path.join(__dirname, 'public'))) {
+  app.use(express.static(path.join(__dirname, 'public')));
+}
+app.use(express.static(__dirname));
 
-// ==========================================
-// OWASP A04: Insecure Design & Rate Limiting (DoS / Brute Force Mitigation)
-// ==========================================
+// OWASP A04: Rate Limiting
 const apiLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // Limit each IP to 100 requests per window
+  windowMs: 15 * 60 * 1000,
+  max: 100,
   message: { status: 429, error: 'Too many requests from this IP. Please try again later.' },
   standardHeaders: true,
   legacyHeaders: false
 });
 
 const formLimiter = rateLimit({
-  windowMs: 60 * 60 * 1000, // 1 hour
-  max: 5, // Limit 5 contact/consultancy submissions per hour
+  windowMs: 60 * 60 * 1000,
+  max: 5,
   message: { status: 429, error: 'Submission limit reached. Please wait before retrying.' }
 });
 
 app.use('/api/', apiLimiter);
 
-// ==========================================
-// OWASP A03: Injection Defenses & Schema Validation
-// ==========================================
+// OWASP A03: Input Validation
 const validateContactInput = [
   body('fullName').trim().isLength({ min: 2, max: 80 }).escape(),
   body('email').isEmail().normalizeEmail(),
@@ -85,7 +79,6 @@ const validateContactInput = [
   body('message').trim().isLength({ min: 10, max: 1000 }).escape()
 ];
 
-// Secure Contact / Consultation API Endpoint
 app.post('/api/contact', formLimiter, validateContactInput, (req, res) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
@@ -94,8 +87,6 @@ app.post('/api/contact', formLimiter, validateContactInput, (req, res) => {
   }
 
   const { fullName, email, company, serviceType, message } = req.body;
-
-  // Log audit event without leaking sensitive data
   logger.info('Consultation Request Received', { email, company, serviceType, timestamp: new Date() });
 
   res.status(200).json({
@@ -104,29 +95,20 @@ app.post('/api/contact', formLimiter, validateContactInput, (req, res) => {
   });
 });
 
-// ==========================================
-// OWASP A10: Server-Side Request Forgery (SSRF) Prevention
-// ==========================================
-// Example URL validation endpoint enforcing explicit domain whitelists
-app.post('/api/domain-check', apiLimiter, [
-  body('domain').isFQDN().withMessage('Invalid Fully Qualified Domain Name')
-], (req, res) => {
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    return res.status(400).json({ success: false, errors: errors.array() });
-  }
-
-  const { domain } = req.body;
-  // Domain is strictly validated. Direct local IP calls (127.0.0.1, 169.254.169.254) are rejected.
-  res.json({ success: true, target: domain, status: 'Target validated against SSRF protection policies.' });
-});
-
-// Serve Single Page Application Routes
+// Dynamic Fallback Route (Automatically serves index.html wherever it exists)
 app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+  const publicIndex = path.join(__dirname, 'public', 'index.html');
+  const rootIndex = path.join(__dirname, 'index.html');
+
+  if (fs.existsSync(publicIndex)) {
+    res.sendFile(publicIndex);
+  } else if (fs.existsSync(rootIndex)) {
+    res.sendFile(rootIndex);
+  } else {
+    res.status(404).send('<h1>404 - index.html not found</h1><p>Please ensure index.html exists in your GitHub repository.</p>');
+  }
 });
 
 app.listen(PORT, () => {
-  console.log(`[+] Karanja Cyber Solutions Server live on http://localhost:${PORT}`);
-  console.log(`[+] OWASP Top 10 Hardened Security Layer Active.`);
+  console.log(`[+] Karanja Cyber Solutions Server live on port ${PORT}`);
 });
