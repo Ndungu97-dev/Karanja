@@ -110,6 +110,41 @@ async function handleVerifyOtp(event) {
   }
 }
 
+    // Registration Handler
+async function handleRegister(event) {
+  event.preventDefault();
+  const fullName = document.getElementById('reg-name').value;
+  const email = document.getElementById('reg-email').value;
+  const password = document.getElementById('reg-password').value;
+
+  const res = await fetch('/api/auth/register', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ fullName, email, password })
+  });
+  const data = await res.json();
+
+  if (data.success) {
+    showToast(data.message, 'success'); // "Registration successful! Check your email to verify."
+  } else {
+    showToast(data.message || 'Registration failed.', 'error');
+  }
+}
+
+// Logout Handler (can be called from dashboard or navbar)
+async function handleLogout() {
+  const res = await fetch('/api/auth/logout', { method: 'POST' });
+  const data = await res.json();
+  
+  if (data.success) {
+    showToast('Logged out successfully.', 'success');
+    setTimeout(() => {
+      window.location.href = 'login.html?logout=true';
+    }, 1000);
+  }
+}
+
+
   </script>
 </body>
 </html>
