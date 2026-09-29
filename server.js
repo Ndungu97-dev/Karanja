@@ -1,8 +1,8 @@
 require("dotenv").config();
 const express = require("express");
 const session = require("express-session");
+const path = require("path");
 
-// Pointing correctly to the backend folder
 const authRoutes = require("./backend/routes/authRoutes");
 const sql = require("./backend/config/db");
 
@@ -11,6 +11,10 @@ const app = express();
 // Middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// <-- THIS IS WHAT SERVES YOUR HTML FILES -->
+app.use(express.static(path.join(__dirname, "public"))); 
+// (Change "public" to wherever your HTML files are saved)
 
 // Session configuration
 app.use(
