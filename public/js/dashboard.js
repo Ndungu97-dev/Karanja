@@ -1,4 +1,3 @@
-
 // --- PROTECTED DASHBOARD LOADER ---
 document.addEventListener("DOMContentLoaded", async () => {
   try {
@@ -6,22 +5,18 @@ document.addEventListener("DOMContentLoaded", async () => {
     const data = await res.json();
 
     if (!data.success) {
-      // Session invalid or expired -> Redirect to login with warning
       window.location.href = 'login.html?expired=true';
       return;
     }
 
     const user = data.user;
-    
-    // Inject user details into dashboard elements if they exist
     const nameEl = document.getElementById('user-fullname');
     const emailEl = document.getElementById('user-email');
     const roleEl = document.getElementById('user-role');
 
-    if (nameEl) nameEl.textContent = user.fullName;
+    if (nameEl) nameEl.textContent = user.fullName || user.full_name;
     if (emailEl) emailEl.textContent = user.email;
-    if (roleEl) roleEl.textContent = user.role ? user.role.toUpperCase() : 'STUDENT';
-
+    if (roleEl) roleEl.textContent = user.role ? String(user.role).toUpperCase() : 'STUDENT';
   } catch (err) {
     console.error('Session check failed:', err);
     window.location.href = 'login.html?expired=true';
@@ -40,6 +35,7 @@ async function handleLogout() {
       showToast('Logout failed.', 'error');
     }
   } catch (err) {
+    console.error('Logout error:', err);
     showToast('Network error during logout.', 'error');
   }
 }
