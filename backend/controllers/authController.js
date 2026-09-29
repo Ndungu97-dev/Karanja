@@ -24,11 +24,13 @@ exports.register = async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, salt);
 
     // Insert into PostgreSQL users table
-    const [newUser] = await sql`
+    const result = await sql`
       INSERT INTO users (full_name, email, password, role)
       VALUES (${full_name}, ${email}, ${hashedPassword}, 'student')
       RETURNING id, full_name, email, role, created_at;
     `;
+
+    const newUser = result[0];
 
     res.status(201).json({
       message: "Registration successful!",
