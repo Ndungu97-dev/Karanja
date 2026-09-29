@@ -1,11 +1,16 @@
 // ==========================================
-// KARANJA CYBER SOLUTIONS & ACADEMY - APP.JS
+// KARANJA CYBER SOLUTIONS & ACADEMY - MAIN APP.JS
 // ==========================================
 
 document.addEventListener("DOMContentLoaded", async () => {
   await loadLayoutComponents();
   updateCartCount();
   handlePaymentQueryParams();
+  
+  // Auto-initialize page-specific renderers if they exist
+  if (typeof renderShopProducts === 'function') {
+    renderShopProducts();
+  }
 });
 
 // --- 1. COMPONENT LOADER (Navigation & Footer Injection) ---
@@ -14,14 +19,20 @@ async function loadLayoutComponents() {
     const navContainer = document.getElementById('nav-placeholder');
     if (navContainer) {
       const res = await fetch('navigation.html');
-      navContainer.innerHTML = await res.text();
-      highlightActiveNavLink();
+      if (res.ok) {
+        navContainer.innerHTML = await res.text();
+        highlightActiveNavLink();
+      } else {
+        console.error('Could not load navigation.html');
+      }
     }
 
     const footerContainer = document.getElementById('footer-placeholder');
     if (footerContainer) {
       const res = await fetch('footer.html');
-      footerContainer.innerHTML = await res.text();
+      if (res.ok) {
+        footerContainer.innerHTML = await res.text();
+      }
     }
   } catch (err) {
     console.error('Failed to load layout components:', err);
@@ -30,8 +41,9 @@ async function loadLayoutComponents() {
 
 function highlightActiveNavLink() {
   const currentPath = window.location.pathname.split('/').pop() || 'index.html';
-  document.querySelectorAll('nav a').forEach(link => {
-    if (link.getAttribute('href') === currentPath) {
+  document.querySelectorAll('nav a, header a').forEach(link => {
+    const href = link.getAttribute('href');
+    if (href === currentPath) {
       link.classList.add('text-cyan-400', 'font-bold');
     }
   });
@@ -60,12 +72,10 @@ function showToast(message, type = 'success') {
 
   container.appendChild(toast);
 
-  // Fade in
   setTimeout(() => {
     toast.classList.remove('translate-y-2', 'opacity-0');
   }, 10);
 
-  // Fade out and remove
   setTimeout(() => {
     toast.classList.add('translate-y-2', 'opacity-0');
     setTimeout(() => toast.remove(), 300);
@@ -100,7 +110,19 @@ function updateCartCount() {
   });
 }
 
-// --- 4. CHECKOUT MODAL & PAYMENT GATEWAY TRIGGERS ---
+function addToCart(id, name, price, numericPrice) {
+  const cart = getCart();
+  const existing = cart.find(item => item.id === id);
+  if (existing) {
+    existing.quantity += 1;
+  } else {
+    cart.push({ id, name, price, numericPrice, quantity: 1 });
+  }
+  saveCart(cart);
+  showToast(`Added "${name}" to your cart.`);
+}
+
+// --- 4. CHECKOUT MODAL & PAYMENT GATEWAYS ---
 function checkoutCart() {
   const cart = getCart();
   if (cart.length === 0) {
@@ -109,7 +131,7 @@ function checkoutCart() {
   }
 
   const totalKsh = cart.reduce((sum, item) => sum + ((item.numericPrice || 0) * (item.quantity || 1)), 0);
-  const totalUsd = Math.round(totalKsh / 130); // Approximate KSh to USD conversion rate
+  const totalUsd = Math.round(totalKsh / 130);
 
   let modalContainer = document.getElementById('shared-modals');
   if (!modalContainer) {
