@@ -1,8 +1,10 @@
 require("dotenv").config();
 const express = require("express");
 const session = require("express-session");
-const authRoutes = require("./routes/authRoutes");
-const sql = require("./config/db");
+
+// Pointing correctly to the backend folder
+const authRoutes = require("./backend/routes/authRoutes");
+const sql = require("./backend/config/db");
 
 const app = express();
 
