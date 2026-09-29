@@ -32,32 +32,33 @@ async function handleRegister(event) {
   const email = document.getElementById('reg-email').value.trim();
   const password = document.getElementById('reg-password').value;
 
-  showToast('Creating account and sending welcome email...');
+  showToast('Creating account...');
   try {
     const res = await fetch('/api/auth/register', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ fullName, email, password })
+      body: JSON.stringify({ full_name: fullName, email, password })
     });
     const data = await res.json();
 
     if (data.success) {
-      showToast(data.message || 'Registration successful! Check your email.', 'success');
-      setTimeout(() => { window.location.href = 'login.html'; }, 2000);
+      showToast(data.message || 'Registration successful!', 'success');
+      setTimeout(() => { window.location.href = 'login.html'; }, 1500);
     } else {
       showToast(data.message || 'Registration failed.', 'error');
     }
   } catch (err) {
+    console.error('Registration error:', err);
     showToast('Network error during registration.', 'error');
   }
 }
 
-// --- 2. LOGIN STEP 1 (Password & Trigger OTP Email) ---
+// --- 2. LOGIN STEP 1 (Password authenticate) ---
 let pendingLoginEmail = '';
 
 async function handleLoginStepOne(event) {
   event.preventDefault();
-  
+
   const emailInput = document.getElementById('login-email');
   const passwordInput = document.getElementById('login-password');
 
@@ -67,7 +68,7 @@ async function handleLoginStepOne(event) {
   const password = passwordInput.value;
 
   pendingLoginEmail = email;
-  showToast('Verifying credentials & sending OTP email...');
+  showToast('Verifying credentials...');
 
   try {
     const res = await fetch('/api/auth/login', {
@@ -78,27 +79,27 @@ async function handleLoginStepOne(event) {
     const data = await res.json();
 
     if (data.success) {
-      showToast(data.message || 'OTP sent to your email!', 'success');
-      
-      // Switch view from password form to OTP verification form
+      showToast(data.message || 'Login successful!', 'success');
+
       const passwordForm = document.getElementById('password-login-form');
       const otpForm = document.getElementById('otp-verify-form');
-      
+
       if (passwordForm) passwordForm.classList.add('hidden');
       if (otpForm) otpForm.classList.remove('hidden');
     } else {
       showToast(data.message || 'Invalid login credentials.', 'error');
     }
   } catch (err) {
+    console.error('Login error:', err);
     showToast('Network error during login.', 'error');
   }
 }
 
-// --- 3. LOGIN STEP 2 (Verify OTP & Enter Dashboard) ---
+// --- 3. LOGIN STEP 2 (Verify OTP) ---
 async function handleVerifyOtp(event) {
   event.preventDefault();
   const otpInput = document.getElementById('login-otp');
-  
+
   if (!otpInput) return;
   const otp = otpInput.value.trim();
 
@@ -107,7 +108,7 @@ async function handleVerifyOtp(event) {
     return;
   }
 
-  showToast('Verifying security OTP...');
+  showToast('Verifying OTP...');
   try {
     const res = await fetch('/api/auth/verify-otp', {
       method: 'POST',
@@ -123,11 +124,11 @@ async function handleVerifyOtp(event) {
       showToast(data.message || 'Invalid or expired OTP.', 'error');
     }
   } catch (err) {
+    console.error('OTP error:', err);
     showToast('Network error during OTP validation.', 'error');
   }
 }
 
-// Helper Toast Notification (if not already defined globally in app.js)
 function showToast(message, type = 'info') {
   let toastContainer = document.getElementById('toast-container');
   if (!toastContainer) {
@@ -138,7 +139,7 @@ function showToast(message, type = 'info') {
   }
 
   const toast = document.createElement('div');
-  toast.style.cssText = `background: ${type === 'error' ? '#ef4444' : type === 'success' ? '#10b981' : '#06b6d4'}; color: #020617; padding: 12px 20px; border-radius: 8px; font-weight: bold; font-family: monospace; box-shadow: 0 4px 12px rgba(0,0,0,0.3); transition: opacity 0.3s ease;`;
+  toast.style.cssText = `background: ${type === 'error' ? '#ef4444' : type === 'success' ? '#10b981' : '#06b6d4'}; color: #020617; padding: 12px 20px; border-radius: 8px; font-weight: bold; font-size: 12px; max-width: 300px; word-wrap: break-word;`;
   toast.innerText = message;
   toastContainer.appendChild(toast);
 
