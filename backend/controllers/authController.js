@@ -153,3 +153,35 @@ exports.getUserProfile = (req, res) => {
 exports.verifyEmail = (req, res) => {
   return res.status(200).json({ success: true, message: 'Email verification route active.' });
 };
+
+// --- DELETE LOGGED-IN USER ACCOUNT ---
+exports.deleteAccount = (req, res) => {
+  try {
+    // Ensure user is logged in via session
+    if (!req.session.user) {
+      return res.status(401).json({ success: false, message: 'Unauthorized.' });
+    }
+
+    const userEmail = req.session.user.email;
+    const userIndex = users.findIndex(u => u.email === userEmail);
+
+    if (userIndex === -1) {
+      return res.status(404).json({ success: false, message: 'User not found.' });
+    }
+
+    // Remove user from the in-memory array
+    users.splice(userIndex, 1);
+
+    // Destroy session and clear cookie
+    req.session.destroy(err => {
+      if (err) {
+        return res.status(500).json({ success: false, message: 'Error closing session.' });
+      }
+      res.clearCookie('connect.sid');
+      return res.status(200).json({ success: true, message: 'Account deleted successfully.' });
+    });
+  } catch (err) {
+    console.error('Delete account error:', err);
+    return res.status(500).json({ success: false, message: 'Server error during account deletion.' });
+  }
+};
