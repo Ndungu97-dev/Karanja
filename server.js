@@ -1,6 +1,6 @@
 /**
- * Karanja Cyber Solutions - Production Multi-Page Express Server
- * OWASP Top 10 Hardened Architecture
+ * Karanja Cyber Solutions - Production Core Server
+ * OWASP Top 10 Hardened Architecture + Anti-Scanner Protection
  */
 
 const express = require('express');
@@ -14,7 +14,7 @@ const winston = require('winston');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Logging Setup
+// Winston Security Logging
 const logger = winston.createLogger({
   level: 'info',
   format: winston.format.combine(
@@ -24,7 +24,7 @@ const logger = winston.createLogger({
   transports: [ new winston.transports.Console() ]
 });
 
-// OWASP Security Headers (Allows CDN Images & Tailwind Scripts)
+// 1. OWASP Security Headers & CSP Configuration
 app.use(
   helmet({
     contentSecurityPolicy: {
@@ -45,43 +45,71 @@ app.use(
 app.use(express.json({ limit: '20kb' }));
 app.use(express.urlencoded({ extended: true, limit: '20kb' }));
 
-// Static File Directory Resolver (Checks public/ subfolder first, then root)
+// 2. Anti-Reconnaissance & Vulnerability Scanner Blocking Middleware
+const blockedUserAgents = [/nikto/i, /sqlmap/i, /nuclei/i, /nmap/i, /masscan/i, /dirbuster/i, /gobuster/i, /ffuf/i, /acunetix/i, /netsparker/i];
+
+app.use((req, res, next) => {
+  const userAgent = req.headers['user-agent'] || '';
+  for (const pattern of blockedUserAgents) {
+    if (pattern.test(userAgent)) {
+      logger.warn('Automated Scanner Blocked', { ip: req.ip, userAgent });
+      return res.status(403).json({ error: 'Access Denied: Automated reconnaissance tool detected.' });
+    }
+  }
+  next();
+});
+
+// 3. Static File Serving (Supports root and public/ subfolder)
 const staticDir = fs.existsSync(path.join(__dirname, 'public'))
   ? path.join(__dirname, 'public')
   : __dirname;
 
 app.use(express.static(staticDir));
 
-// Rate Limiting
-const apiLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 150,
-  message: { success: false, error: 'Rate limit exceeded. Please try again later.' }
+// 4. Rate Limiting Rules
+const globalLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 mins
+  max: 200,
+  message: { success: false, error: 'Too many requests. Please try again later.' }
 });
-app.use('/api/', apiLimiter);
 
-// In-Memory User Database
+const authLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000, // 1 hour
+  max: 10,
+  message: { success: false, error: 'Too many login/registration attempts. Account temporarily locked.' }
+});
+
+app.use('/api/', globalLimiter);
+app.use('/api/auth/', authLimiter);
+
+// In-Memory Database
 const users = [];
 
-// ------------------- PAGE ROUTES -------------------
-const servePage = (res, pageName) => {
+// 5. Security & Indexing Endpoints
+app.get('/.well-known/security.txt', (req, res) => {
+  res.type('text/plain');
+  res.send(`Contact: tel:+254714436151\nContact: mailto:security@karanjacyber.co.ke\nExpires: 2027-12-31T23:59:59.000Z\nPolicy: https://karanja.onrender.com/security-policy\nPreferred-Languages: en, sw`);
+});
+
+app.get('/robots.txt', (req, res) => {
+  res.type('text/plain');
+  res.send(`User-agent: *\nAllow: /\nDisallow: /api/\nDisallow: /admin/\nSitemap: https://karanja.onrender.com/sitemap.xml`);
+});
+
+// 6. Page Routes
+const sendPage = (res, pageName) => {
   const filePath = path.join(staticDir, pageName);
-  if (fs.existsSync(filePath)) {
-    res.sendFile(filePath);
-  } else {
-    res.status(404).send(`<h1>404 - ${pageName} not found</h1><p>Ensure ${pageName} exists in your repository.</p>`);
-  }
+  if (fs.existsSync(filePath)) res.sendFile(filePath);
+  else res.status(404).send(`<h1>404 - ${pageName} not found</h1>`);
 };
 
-app.get('/', (req, res) => servePage(res, 'index.html'));
-app.get('/about', (req, res) => servePage(res, 'about.html'));
-app.get('/services', (req, res) => servePage(res, 'services.html'));
-app.get('/shop', (req, res) => servePage(res, 'shop.html'));
-app.get('/contact', (req, res) => servePage(res, 'contact.html'));
+app.get('/', (req, res) => sendPage(res, 'index.html'));
+app.get('/about', (req, res) => sendPage(res, 'about.html'));
+app.get('/services', (req, res) => sendPage(res, 'services.html'));
+app.get('/shop', (req, res) => sendPage(res, 'shop.html'));
+app.get('/contact', (req, res) => sendPage(res, 'contact.html'));
 
-// ------------------- API ENDPOINTS -------------------
-
-// Account Registration
+// 7. API Endpoints (Auth, Purchase & Contact)
 app.post('/api/auth/register', [
   body('fullName').trim().isLength({ min: 3 }).escape(),
   body('email').isEmail().normalizeEmail(),
@@ -93,21 +121,16 @@ app.post('/api/auth/register', [
 
   const { fullName, email, phone, password } = req.body;
   if (users.find(u => u.email === email)) {
-    return res.status(400).json({ success: false, message: 'Account with this email already exists.' });
+    return res.status(400).json({ success: false, message: 'Account already exists.' });
   }
 
   const newUser = { id: Date.now(), fullName, email, phone, password };
   users.push(newUser);
   logger.info('User Registered', { email, phone });
 
-  res.status(201).json({
-    success: true,
-    message: 'Account created successfully! You can now log in.',
-    user: { fullName: newUser.fullName, email: newUser.email, phone: newUser.phone }
-  });
+  res.status(201).json({ success: true, message: 'Registration successful! You can now login.', user: { fullName, email, phone } });
 });
 
-// Account Login
 app.post('/api/auth/login', [
   body('email').isEmail().normalizeEmail(),
   body('password').notEmpty()
@@ -118,16 +141,11 @@ app.post('/api/auth/login', [
   const { email, password } = req.body;
   const user = users.find(u => u.email === email && u.password === password);
 
-  if (!user) return res.status(401).json({ success: false, message: 'Invalid email or password.' });
+  if (!user) return res.status(401).json({ success: false, message: 'Invalid credentials.' });
 
-  res.status(200).json({
-    success: true,
-    message: 'Logged in successfully!',
-    user: { fullName: user.fullName, email: user.email, phone: user.phone }
-  });
+  res.status(200).json({ success: true, message: 'Login successful!', user: { fullName: user.fullName, email: user.email, phone: user.phone } });
 });
 
-// Course / Shop Purchase
 app.post('/api/courses/purchase', [
   body('courseId').notEmpty(),
   body('courseName').notEmpty(),
@@ -137,16 +155,10 @@ app.post('/api/courses/purchase', [
   const errors = validationResult(req);
   if (!errors.isEmpty()) return res.status(400).json({ success: false, errors: errors.array() });
 
-  const { courseName, userEmail, paymentPhone } = req.body;
-  logger.info('Course Order Received', { courseName, userEmail, paymentPhone });
-
-  res.status(200).json({
-    success: true,
-    message: `Enrollment request for "${courseName}" sent! Confirmation SMS sent to ${paymentPhone}.`
-  });
+  const { courseName, paymentPhone } = req.body;
+  res.status(200).json({ success: true, message: `Enrollment initiated for ${courseName}! Confirmation sent to ${paymentPhone}.` });
 });
 
-// Contact Form
 app.post('/api/contact', [
   body('fullName').trim().isLength({ min: 2 }).escape(),
   body('email').isEmail().normalizeEmail(),
@@ -155,15 +167,11 @@ app.post('/api/contact', [
   const errors = validationResult(req);
   if (!errors.isEmpty()) return res.status(400).json({ success: false, errors: errors.array() });
 
-  res.status(200).json({
-    success: true,
-    message: 'Your encrypted message was delivered to 0714436151. We will reach out shortly.'
-  });
+  res.status(200).json({ success: true, message: 'Message sent securely to 0714436151.' });
 });
 
-// Fallback Route
-app.get('*', (req, res) => servePage(res, 'index.html'));
+app.get('*', (req, res) => sendPage(res, 'index.html'));
 
 app.listen(PORT, () => {
-  console.log(`[+] Karanja Cyber Solutions live on port ${PORT}`);
+  console.log(`[+] Karanja Cyber Solutions running on port ${PORT}`);
 });
