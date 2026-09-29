@@ -1,14 +1,14 @@
 const nodemailer = require('nodemailer');
 const bcrypt = require('bcryptjs');
 
-// In-memory user store (or swap this out for your database connection later)
+// In-memory user store (swap with your database model when ready)
 const users = [];
 
 // Configure Outlook SMTP Transporter
 const transporter = nodemailer.createTransport({
   host: 'smtp-mail.outlook.com',
   port: 587,
-  secure: false, // true for 465, false for other ports
+  secure: false,
   auth: {
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASS
@@ -17,8 +17,6 @@ const transporter = nodemailer.createTransport({
     ciphers: 'SSLv3'
   }
 });
-
-
 
 // --- 1. USER REGISTRATION ---
 exports.registerUser = async (req, res) => {
@@ -45,7 +43,7 @@ exports.registerUser = async (req, res) => {
     };
     users.push(newUser);
 
-    // Dispatch Welcome Email
+    // Dispatch Welcome Email via Outlook
     await transporter.sendMail({
       from: `"Karanja Cyber Academy" <${process.env.EMAIL_USER}>`,
       to: email,
@@ -83,7 +81,7 @@ exports.loginStepOne = async (req, res) => {
     user.otp = otp;
     user.otpExpiry = Date.now() + 10 * 60 * 1000; // Valid for 10 minutes
 
-    // Dispatch OTP Email
+    // Dispatch OTP Email via Outlook
     await transporter.sendMail({
       from: `"Karanja Cyber Academy Security" <${process.env.EMAIL_USER}>`,
       to: email,
@@ -160,4 +158,3 @@ exports.getUserProfile = (req, res) => {
 exports.verifyEmail = (req, res) => {
   return res.status(200).json({ success: true, message: 'Email verification route active.' });
 };
-
