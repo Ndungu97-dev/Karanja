@@ -18,7 +18,7 @@ const transporter = nodemailer.createTransport({
   }
 });
 
-// --- 1. USER REGISTRATION (With Admin Notification) ---
+// --- 1. USER REGISTRATION (Sends Welcome Email) ---
 exports.registerUser = async (req, res) => {
   try {
     const { fullName, email, password } = req.body;
@@ -43,7 +43,7 @@ exports.registerUser = async (req, res) => {
     };
     users.push(newUser);
 
-    // 1. Dispatch Welcome Email to the Student
+    // Dispatch Welcome Email via Outlook
     await transporter.sendMail({
       from: `"Karanja Cyber Academy" <${process.env.EMAIL_USER}>`,
       to: email,
@@ -52,28 +52,9 @@ exports.registerUser = async (req, res) => {
         <div style="font-family: monospace; background: #020617; color: #f8fafc; padding: 24px; border-radius: 12px; border: 1px solid #1e293b;">
           <h2 style="color: #06b6d4;">Welcome, ${fullName}!</h2>
           <p>Your account has been successfully created on Karanja Cyber Solutions & Academy.</p>
-          <p>You can now log in, explore our cloud infrastructure modules, and access simulation labs.</p>
+          <p>You can now log in using your credentials. A secure 6-digit OTP will be emailed to you upon login.</p>
           <hr style="border-color: #1e293b; margin: 20px 0;">
           <p style="font-size: 11px; color: #64748b;">Secure Cloud & Cyber Operations Platform • 2026</p>
-        </div>
-      `
-    });
-
-    // 2. Dispatch Notification Email to YOU (Admin / Owner Inbox)
-    await transporter.sendMail({
-      from: `"Karanja Academy System" <${process.env.EMAIL_USER}>`,
-      to: process.env.EMAIL_USER, // Sends straight to your Outlook inbox!
-      subject: '🔔 New Student Registration Alert',
-      html: `
-        <div style="font-family: monospace; background: #020617; color: #f8fafc; padding: 24px; border-radius: 12px; border: 1px solid #1e293b;">
-          <h3 style="color: #10b981;">New Account Registered</h3>
-          <p>A new user has just signed up on Karanja Cyber Solutions & Academy:</p>
-          <ul style="background: #0f172a; padding: 15px; border-radius: 8px; list-style: none;">
-            <li><strong>Full Name:</strong> ${fullName}</li>
-            <li><strong>Email:</strong> ${email}</li>
-            <li><strong>Timestamp:</strong> ${new-Date().toLocaleString()}</li>
-          </ul>
-          <p style="font-size: 11px; color: #64748b;">System automated notification.</p>
         </div>
       `
     });
@@ -85,7 +66,7 @@ exports.registerUser = async (req, res) => {
   }
 };
 
-// --- 2. LOGIN STEP 1 (Verify Password & Dispatch OTP Email) ---
+// --- 2. LOGIN STEP 1 (Verify Password & Dispatch Email OTP) ---
 exports.loginStepOne = async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -126,7 +107,7 @@ exports.loginStepOne = async (req, res) => {
   }
 };
 
-// --- 3. LOGIN STEP 2 (Verify OTP & Initialize Session) ---
+// --- 3. LOGIN STEP 2 (Verify Email OTP & Initialize Session) ---
 exports.verifyOtpAndLogin = (req, res) => {
   try {
     const { email, otp } = req.body;
@@ -136,9 +117,11 @@ exports.verifyOtpAndLogin = (req, res) => {
       return res.status(400).json({ success: false, message: 'Invalid or expired OTP code.' });
     }
 
+    // Clear OTP state after successful validation
     user.otp = null;
     user.otpExpiry = null;
 
+    // Establish secure session
     req.session.user = { 
       fullName: user.fullName, 
       email: user.email, 
@@ -163,7 +146,7 @@ exports.logoutUser = (req, res) => {
   });
 };
 
-// --- 5. GET USER PROFILE ---
+// --- 5. GET USER PROFILE (Session Check) ---
 exports.getUserProfile = (req, res) => {
   if (!req.session.user) {
     return res.status(401).json({ success: false, message: 'Unauthorized session.' });
