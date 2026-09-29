@@ -2,108 +2,82 @@
 <html lang="en" class="dark">
 <head>
   <meta charset="UTF-8">
-  <title>Secure Contact | Karanja Cyber Solutions</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Contact Us | Karanja Cyber Solutions</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 </head>
 <body class="bg-slate-950 text-slate-100 font-sans">
-  <header class="bg-slate-900 border-b border-slate-800">
-    <nav class="max-w-7xl mx-auto px-4 h-20 flex items-center justify-between">
-      <a href="index.html" class="text-xl font-bold text-white">KARANJA <span class="text-cyan-400">CYBER</span></a>
-      <div class="flex gap-6 text-sm">
-        <a href="index.html" class="hover:text-cyan-400">Home</a>
-        <a href="about.html" class="hover:text-cyan-400">About Us</a>
-        <a href="services.html" class="hover:text-cyan-400">Consultancy</a>
-        <a href="shop.html" class="hover:text-cyan-400">Digital Store</a>
-        <a href="contact.html" class="text-cyan-400 font-semibold">Secure Contact</a>
-      </div>
-    </nav>
-  </header>
+<!-- TOP EMERGENCY & CONTACT BAR -->
+<div class="bg-slate-950 border-b border-cyan-500/20 py-2 px-4 text-xs font-mono text-slate-300">
+  <div class="max-w-7xl mx-auto flex flex-wrap justify-between items-center gap-2">
+    <div class="flex items-center space-x-4">
+      <span><i class="fa-solid fa-phone text-cyan-400"></i> Call/WhatsApp: <a href="tel:0714436151" class="text-cyan-300 font-bold hover:underline">0714436151</a></span>
+      <span class="hidden md:inline text-slate-500">|</span>
+      <span class="hidden md:inline"><i class="fa-solid fa-shield-halved text-cyan-400"></i> OWASP Top 10 Hardened</span>
+    </div>
+    <div class="flex items-center space-x-3">
+      <button onclick="requestPushPermission()" class="text-cyan-400 hover:text-cyan-300 flex items-center gap-1 transition">
+        <i class="fa-solid fa-bell"></i> Enable Security Alerts
+      </button>
+    </div>
+  </div>
+</div>
 
-  <main class="max-w-3xl mx-auto px-4 py-16">
-    <div class="text-center mb-10">
-      <h1 class="text-3xl font-bold text-white">Secure Intake Channel</h1>
-      <p class="text-slate-400 text-sm mt-2">Submissions are sanitized and protected against OWASP A03 / A07 vulnerability risks.</p>
+<!-- NAVIGATION BAR -->
+<header class="sticky top-0 z-40 bg-slate-950/90 backdrop-blur-md border-b border-slate-800">
+  <nav class="max-w-7xl mx-auto px-4 h-20 flex items-center justify-between">
+    <a href="/" class="flex items-center space-x-3">
+      <div class="w-10 h-10 rounded-xl bg-cyan-500/10 border border-cyan-500/40 flex items-center justify-center text-cyan-400">
+        <i class="fa-solid fa-terminal text-lg"></i>
+      </div>
+      <span class="text-xl font-bold tracking-tight text-white">KARANJA <span class="text-cyan-400">CYBER</span></span>
+    </a>
+
+    <div class="hidden lg:flex items-center space-x-8 text-sm font-medium">
+      <a href="/" class="text-slate-300 hover:text-cyan-400 transition">Home</a>
+      <a href="about.html" class="text-slate-300 hover:text-cyan-400 transition">About Us</a>
+      <a href="services.html" class="text-slate-300 hover:text-cyan-400 transition">Services</a>
+      <a href="shop.html" class="text-slate-300 hover:text-cyan-400 transition">Academy (20 Courses)</a>
+      <a href="contact.html" class="text-slate-300 hover:text-cyan-400 transition">Contact</a>
     </div>
 
-    <form id="contactForm" class="bg-slate-900 border border-slate-800 p-8 rounded-xl shadow-xl space-y-6">
-      <div id="statusAlert" class="hidden p-4 rounded text-sm font-medium"></div>
+    <!-- Dynamic Auth Buttons -->
+    <div id="authNavButtons" class="flex items-center space-x-3">
+      <button onclick="openModal('loginModal')" class="text-xs font-semibold px-4 py-2 rounded-lg border border-slate-700 text-slate-200 hover:border-cyan-500 hover:text-cyan-400 transition">Login</button>
+      <button onclick="openModal('registerModal')" class="text-xs font-bold px-4 py-2 rounded-lg bg-cyan-500 hover:bg-cyan-400 text-slate-950 transition">Register</button>
+    </div>
+    <div id="userNavProfile" class="hidden flex items-center space-x-3">
+      <span id="navUserName" class="text-xs text-cyan-400 font-mono"></span>
+      <button onclick="logoutUser()" class="text-xs font-semibold px-3 py-1.5 rounded bg-red-500/20 text-red-400 hover:bg-red-500/30 transition">Logout</button>
+    </div>
+  </nav>
+</header>
 
-      <div>
-        <label class="block text-xs font-mono uppercase text-slate-400 mb-2">Full Name</label>
-        <input type="text" id="fullName" required class="w-full bg-slate-950 border border-slate-800 rounded px-4 py-3 text-white focus:outline-none focus:border-cyan-500">
+  <section class="py-20">
+    <div class="max-w-3xl mx-auto px-4">
+      <div class="text-center mb-10">
+        <h1 class="text-4xl font-extrabold text-white mb-2">Contact Security Team</h1>
+        <p class="text-slate-400">Direct Phone: <a href="tel:0714436151" class="text-cyan-400 font-bold">0714436151</a></p>
       </div>
-
-      <div class="grid md:grid-cols-2 gap-6">
+      <form onsubmit="handleContact(event)" class="bg-slate-900 p-8 rounded-2xl border border-slate-800 space-y-6">
         <div>
-          <label class="block text-xs font-mono uppercase text-slate-400 mb-2">Email Address</label>
-          <input type="email" id="email" required class="w-full bg-slate-950 border border-slate-800 rounded px-4 py-3 text-white focus:outline-none focus:border-cyan-500">
+          <label class="block text-xs font-mono text-slate-400 mb-2">FULL NAME</label>
+          <input type="text" id="contactName" required class="w-full px-4 py-3 rounded-lg bg-slate-950 border border-slate-800 text-white outline-none focus:border-cyan-500">
         </div>
         <div>
-          <label class="block text-xs font-mono uppercase text-slate-400 mb-2">Company / Organization</label>
-          <input type="text" id="company" class="w-full bg-slate-950 border border-slate-800 rounded px-4 py-3 text-white focus:outline-none focus:border-cyan-500">
+          <label class="block text-xs font-mono text-slate-400 mb-2">EMAIL ADDRESS</label>
+          <input type="email" id="contactEmail" required class="w-full px-4 py-3 rounded-lg bg-slate-950 border border-slate-800 text-white outline-none focus:border-cyan-500">
         </div>
-      </div>
+        <div>
+          <label class="block text-xs font-mono text-slate-400 mb-2">MESSAGE</label>
+          <textarea id="contactMessage" rows="4" required class="w-full px-4 py-3 rounded-lg bg-slate-950 border border-slate-800 text-white outline-none focus:border-cyan-500"></textarea>
+        </div>
+        <button type="submit" class="w-full py-3.5 rounded-xl bg-cyan-500 text-slate-950 font-bold">Send Message</button>
+      </form>
+    </div>
+  </section>
 
-      <div>
-        <label class="block text-xs font-mono uppercase text-slate-400 mb-2">Service Requirement</label>
-        <select id="serviceType" class="w-full bg-slate-950 border border-slate-800 rounded px-4 py-3 text-white focus:outline-none focus:border-cyan-500">
-          <option value="pentest">Penetration Testing</option>
-          <option value="soc">SOC Monitoring Setup</option>
-          <option value="cloud">Cloud Security Architecture</option>
-          <option value="forensics">Digital Forensics & Incident Response</option>
-          <option value="general">General Consultancy</option>
-        </select>
-      </div>
-
-      <div>
-        <label class="block text-xs font-mono uppercase text-slate-400 mb-2">Project Scope / Message</label>
-        <textarea id="message" rows="5" required class="w-full bg-slate-950 border border-slate-800 rounded px-4 py-3 text-white focus:outline-none focus:border-cyan-500"></textarea>
-      </div>
-
-      <button type="submit" class="w-full bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold py-3.5 rounded transition">
-        Encrypt & Send Inquiry
-      </button>
-    </form>
-  </main>
-
-  <script>
-    document.getElementById('contactForm').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const statusAlert = document.getElementById('statusAlert');
-      
-      const payload = {
-        fullName: document.getElementById('fullName').value,
-        email: document.getElementById('email').value,
-        company: document.getElementById('company').value,
-        serviceType: document.getElementById('serviceType').value,
-        message: document.getElementById('message').value
-      };
-
-      try {
-        const response = await fetch('/api/contact', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
-        });
-
-        const data = await response.json();
-        statusAlert.classList.remove('hidden');
-
-        if (response.ok) {
-          statusAlert.className = "p-4 rounded text-sm font-medium bg-emerald-950 text-emerald-300 border border-emerald-800 mb-6";
-          statusAlert.innerText = data.message;
-          document.getElementById('contactForm').reset();
-        } else {
-          statusAlert.className = "p-4 rounded text-sm font-medium bg-red-950 text-red-300 border border-red-800 mb-6";
-          statusAlert.innerText = data.errors ? data.errors.map(e => e.msg).join(', ') : data.error;
-        }
-      } catch (err) {
-        statusAlert.classList.remove('hidden');
-        statusAlert.className = "p-4 rounded text-sm font-medium bg-red-950 text-red-300 border border-red-800 mb-6";
-        statusAlert.innerText = "Network transmission error. Please retry.";
-      }
-    });
-  </script>
+  <script src="/js/app.js"></script>
 </body>
 </html>
