@@ -28,28 +28,60 @@ document.addEventListener("DOMContentLoaded", () => {
 // --- 1. REGISTRATION HANDLER ---
 async function handleRegister(event) {
   event.preventDefault();
-  const fullName = document.getElementById('reg-name').value.trim();
-  const email = document.getElementById('reg-email').value.trim();
-  const password = document.getElementById('reg-password').value;
+  
+  const fullNameInput = document.getElementById('reg-name');
+  const emailInput = document.getElementById('reg-email');
+  const passwordInput = document.getElementById('reg-password');
 
-  showToast('Creating account...');
+  const fullName = fullNameInput.value.trim();
+  const email = emailInput.value.trim();
+  const password = passwordInput.value.trim();
+
+  // Client-side validation
+  if (!fullName) {
+    showToast('Please enter your full name.', 'error');
+    fullNameInput.focus();
+    return;
+  }
+
+  if (!email) {
+    showToast('Please enter your email address.', 'error');
+    emailInput.focus();
+    return;
+  }
+
+  if (!password) {
+    showToast('Please enter a password.', 'error');
+    passwordInput.focus();
+    return;
+  }
+
+  if (password.length < 6) {
+    showToast('Password must be at least 6 characters.', 'error');
+    passwordInput.focus();
+    return;
+  }
+
+  showToast('Creating your account...');
+
   try {
     const res = await fetch('/api/auth/register', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ full_name: fullName, email, password })
     });
+
     const data = await res.json();
 
     if (data.success) {
-      showToast(data.message || 'Registration successful!', 'success');
+      showToast(data.message || 'Account created! Redirecting to login...', 'success');
       setTimeout(() => { window.location.href = 'login.html'; }, 1500);
     } else {
-      showToast(data.message || 'Registration failed.', 'error');
+      showToast(data.message || 'Registration failed. Please try again.', 'error');
     }
   } catch (err) {
     console.error('Registration error:', err);
-    showToast('Network error during registration.', 'error');
+    showToast('Network error. Please check your connection and try again.', 'error');
   }
 }
 
@@ -65,7 +97,19 @@ async function handleLoginStepOne(event) {
   if (!emailInput || !passwordInput) return;
 
   const email = emailInput.value.trim();
-  const password = passwordInput.value;
+  const password = passwordInput.value.trim();
+
+  if (!email) {
+    showToast('Please enter your email.', 'error');
+    emailInput.focus();
+    return;
+  }
+
+  if (!password) {
+    showToast('Please enter your password.', 'error');
+    passwordInput.focus();
+    return;
+  }
 
   pendingLoginEmail = email;
   showToast('Verifying credentials...');
@@ -76,6 +120,7 @@ async function handleLoginStepOne(event) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, password })
     });
+
     const data = await res.json();
 
     if (data.success) {
@@ -98,23 +143,33 @@ async function handleLoginStepOne(event) {
 // --- 3. LOGIN STEP 2 (Verify OTP) ---
 async function handleVerifyOtp(event) {
   event.preventDefault();
-  const otpInput = document.getElementById('login-otp');
 
+  const otpInput = document.getElementById('login-otp');
   if (!otpInput) return;
+
   const otp = otpInput.value.trim();
 
-  if (!otp || otp.length !== 6) {
+  if (!otp) {
+    showToast('Please enter the OTP code.', 'error');
+    otpInput.focus();
+    return;
+  }
+
+  if (otp.length !== 6 || !/^\d+$/.test(otp)) {
     showToast('Please enter a valid 6-digit OTP code.', 'error');
+    otpInput.focus();
     return;
   }
 
   showToast('Verifying OTP...');
+
   try {
     const res = await fetch('/api/auth/verify-otp', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email: pendingLoginEmail, otp })
     });
+
     const data = await res.json();
 
     if (data.success) {
