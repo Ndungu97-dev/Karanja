@@ -2,67 +2,84 @@
 <html lang="en" class="dark">
 <head>
   <meta charset="UTF-8">
-  <title>Consultancy & Services | Karanja Cyber Solutions</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cyber Services | Karanja Cyber Solutions</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 </head>
 <body class="bg-slate-950 text-slate-100 font-sans">
-  <header class="bg-slate-900 border-b border-slate-800">
-    <nav class="max-w-7xl mx-auto px-4 h-20 flex items-center justify-between">
-      <a href="index.html" class="text-xl font-bold text-white">KARANJA <span class="text-cyan-400">CYBER</span></a>
-      <div class="flex gap-6 text-sm">
-        <a href="index.html" class="hover:text-cyan-400">Home</a>
-        <a href="about.html" class="hover:text-cyan-400">About Us</a>
-        <a href="services.html" class="text-cyan-400 font-semibold">Consultancy</a>
-        <a href="shop.html" class="hover:text-cyan-400">Digital Store</a>
-        <a href="contact.html" class="hover:text-cyan-400">Secure Contact</a>
-      </div>
-    </nav>
-  </header>
+<!-- TOP EMERGENCY & CONTACT BAR -->
+<div class="bg-slate-950 border-b border-cyan-500/20 py-2 px-4 text-xs font-mono text-slate-300">
+  <div class="max-w-7xl mx-auto flex flex-wrap justify-between items-center gap-2">
+    <div class="flex items-center space-x-4">
+      <span><i class="fa-solid fa-phone text-cyan-400"></i> Call/WhatsApp: <a href="tel:0714436151" class="text-cyan-300 font-bold hover:underline">0714436151</a></span>
+      <span class="hidden md:inline text-slate-500">|</span>
+      <span class="hidden md:inline"><i class="fa-solid fa-shield-halved text-cyan-400"></i> OWASP Top 10 Hardened</span>
+    </div>
+    <div class="flex items-center space-x-3">
+      <button onclick="requestPushPermission()" class="text-cyan-400 hover:text-cyan-300 flex items-center gap-1 transition">
+        <i class="fa-solid fa-bell"></i> Enable Security Alerts
+      </button>
+    </div>
+  </div>
+</div>
 
-  <main class="max-w-7xl mx-auto px-4 py-16">
-    <div class="text-center max-w-3xl mx-auto mb-16">
-      <h1 class="text-4xl font-extrabold text-white">Cybersecurity Consultancy Services</h1>
-      <p class="text-slate-400 mt-4">Tailored defensive and offensive security operations for enterprise resilience.</p>
+<!-- NAVIGATION BAR -->
+<header class="sticky top-0 z-40 bg-slate-950/90 backdrop-blur-md border-b border-slate-800">
+  <nav class="max-w-7xl mx-auto px-4 h-20 flex items-center justify-between">
+    <a href="/" class="flex items-center space-x-3">
+      <div class="w-10 h-10 rounded-xl bg-cyan-500/10 border border-cyan-500/40 flex items-center justify-center text-cyan-400">
+        <i class="fa-solid fa-terminal text-lg"></i>
+      </div>
+      <span class="text-xl font-bold tracking-tight text-white">KARANJA <span class="text-cyan-400">CYBER</span></span>
+    </a>
+
+    <div class="hidden lg:flex items-center space-x-8 text-sm font-medium">
+      <a href="/" class="text-slate-300 hover:text-cyan-400 transition">Home</a>
+      <a href="about.html" class="text-slate-300 hover:text-cyan-400 transition">About Us</a>
+      <a href="services.html" class="text-slate-300 hover:text-cyan-400 transition">Services</a>
+      <a href="shop.html" class="text-slate-300 hover:text-cyan-400 transition">Academy (20 Courses)</a>
+      <a href="contact.html" class="text-slate-300 hover:text-cyan-400 transition">Contact</a>
     </div>
 
-    <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-      <!-- Service 1 -->
-      <div class="p-8 bg-slate-900 rounded-xl border border-slate-800 flex flex-col justify-between">
-        <div>
-          <div class="w-12 h-12 rounded-lg bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-cyan-400 text-xl mb-6">
-            <i class="fa-solid fa-terminal"></i>
-          </div>
-          <h3 class="text-xl font-bold text-white mb-3">Penetration Testing</h3>
-          <p class="text-slate-400 text-sm leading-relaxed">Systematic vulnerability discovery across web applications, APIs, network protocols, and cloud infrastructure.</p>
-        </div>
-        <a href="contact.html?service=pentest" class="mt-8 text-center bg-slate-800 hover:bg-slate-700 text-cyan-400 py-2.5 rounded font-bold text-sm border border-slate-700 transition">Scope Audit</a>
-      </div>
+    <!-- Dynamic Auth Buttons -->
+    <div id="authNavButtons" class="flex items-center space-x-3">
+      <button onclick="openModal('loginModal')" class="text-xs font-semibold px-4 py-2 rounded-lg border border-slate-700 text-slate-200 hover:border-cyan-500 hover:text-cyan-400 transition">Login</button>
+      <button onclick="openModal('registerModal')" class="text-xs font-bold px-4 py-2 rounded-lg bg-cyan-500 hover:bg-cyan-400 text-slate-950 transition">Register</button>
+    </div>
+    <div id="userNavProfile" class="hidden flex items-center space-x-3">
+      <span id="navUserName" class="text-xs text-cyan-400 font-mono"></span>
+      <button onclick="logoutUser()" class="text-xs font-semibold px-3 py-1.5 rounded bg-red-500/20 text-red-400 hover:bg-red-500/30 transition">Logout</button>
+    </div>
+  </nav>
+</header>
 
-      <!-- Service 2 -->
-      <div class="p-8 bg-slate-900 rounded-xl border border-slate-800 flex flex-col justify-between">
-        <div>
-          <div class="w-12 h-12 rounded-lg bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 text-xl mb-6">
-            <i class="fa-solid fa-tower-observation"></i>
-          </div>
-          <h3 class="text-xl font-bold text-white mb-3">SOC & Threat Hunting</h3>
-          <p class="text-slate-400 text-sm leading-relaxed">24/7 telemetry monitoring using Wazuh, custom YARA rules, and automated incident response escalation pipelines.</p>
+  <section class="py-20">
+    <div class="max-w-7xl mx-auto px-4">
+      <h1 class="text-4xl font-extrabold text-white text-center mb-12">Enterprise Security Services</h1>
+      <div class="grid md:grid-cols-3 gap-8">
+        <div class="bg-slate-900 p-6 rounded-2xl border border-slate-800">
+          <img src="https://images.unsplash.com/photo-1563986768609-322da13575f3?auto=format&fit=crop&w=600&q=80" class="w-full h-44 object-cover rounded-xl mb-6">
+          <h3 class="text-xl font-bold text-white mb-2">Penetration Testing</h3>
+          <p class="text-slate-400 text-sm mb-4">Web, API, and network vulnerability assessment & ethical hacking.</p>
+          <a href="contact.html" class="text-cyan-400 font-semibold text-sm">Request Service &rarr;</a>
         </div>
-        <a href="contact.html?service=soc" class="mt-8 text-center bg-slate-800 hover:bg-slate-700 text-emerald-400 py-2.5 rounded font-bold text-sm border border-slate-700 transition">Deploy SOC</a>
-      </div>
-
-      <!-- Service 3 -->
-      <div class="p-8 bg-slate-900 rounded-xl border border-slate-800 flex flex-col justify-between">
-        <div>
-          <div class="w-12 h-12 rounded-lg bg-blue-500/10 border border-blue-500/30 flex items-center justify-center text-blue-400 text-xl mb-6">
-            <i class="fa-solid fa-cloud-shield"></i>
-          </div>
-          <h3 class="text-xl font-bold text-white mb-3">Cloud Infrastructure Security</h3>
-          <p class="text-slate-400 text-sm leading-relaxed">Hardening AWS/Azure workloads, IaC template reviews (Bicep/Terraform), and Zero-Trust architecture configuration.</p>
+        <div class="bg-slate-900 p-6 rounded-2xl border border-slate-800">
+          <img src="https://images.unsplash.com/photo-1558494949-ef010cbdcc31?auto=format&fit=crop&w=600&q=80" class="w-full h-44 object-cover rounded-xl mb-6">
+          <h3 class="text-xl font-bold text-white mb-2">SOC & SIEM Operations</h3>
+          <p class="text-slate-400 text-sm mb-4">24/7 Security Operations Center monitoring powered by Wazuh SIEM.</p>
+          <a href="contact.html" class="text-cyan-400 font-semibold text-sm">Request Service &rarr;</a>
         </div>
-        <a href="contact.html?service=cloud" class="mt-8 text-center bg-slate-800 hover:bg-slate-700 text-blue-400 py-2.5 rounded font-bold text-sm border border-slate-700 transition">Harden Cloud</a>
+        <div class="bg-slate-900 p-6 rounded-2xl border border-slate-800">
+          <img src="https://images.unsplash.com/photo-1544197150-b99a580bb7a8?auto=format&fit=crop&w=600&q=80" class="w-full h-44 object-cover rounded-xl mb-6">
+          <h3 class="text-xl font-bold text-white mb-2">Cloud Security Hardening</h3>
+          <p class="text-slate-400 text-sm mb-4">Azure Bicep & AWS security auditing, IAM policies, and container isolation.</p>
+          <a href="contact.html" class="text-cyan-400 font-semibold text-sm">Request Service &rarr;</a>
+        </div>
       </div>
     </div>
-  </main>
+  </section>
+
+  <script src="/js/app.js"></script>
 </body>
 </html>
