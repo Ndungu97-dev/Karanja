@@ -1,5 +1,5 @@
 const { validationResult } = require('express-validator');
-const bcrypt = require('bcrypt');
+const bcrypt = require('bcryptjs');
 const { v4: uuidv4 } = require('uuid');
 const nodemailer = require('nodemailer');
 
