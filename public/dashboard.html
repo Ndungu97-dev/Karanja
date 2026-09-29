@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Student Dashboard - Karanja Cyber Solutions & Academy</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-slate-950 text-slate-100 font-mono min-h-screen flex flex-col justify-between">
+
+  <!-- Navigation Injection Placeholder -->
+  <div id="nav-placeholder"></div>
+
+  <!-- Main Dashboard Content -->
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 w-full flex-grow space-y-8">
+    
+    <!-- Welcome Header Banner -->
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 md:p-8 flex flex-col md:flex-row items-start md:items-center justify-between gap-6 shadow-2xl">
+      <div class="space-y-2">
+        <div class="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 text-xs">
+          <i class="fa-solid fa-shield-halved"></i>
+          <span id="user-role">STUDENT</span>
+        </div>
+        <h1 class="text-2xl md:text-3xl font-bold text-white tracking-tight">Welcome back, <span id="user-fullname" class="text-cyan-400">Loading...</span></h1>
+        <p class="text-slate-400 text-xs" id="user-email">fetching session...</p>
+      </div>
+      <button onclick="handleLogout()" class="px-5 py-2.5 rounded-xl bg-red-500/10 border border-red-500/30 hover:bg-red-500/20 text-red-400 text-xs font-bold transition flex items-center space-x-2">
+        <i class="fa-solid fa-right-from-bracket"></i>
+        <span>Secure Logout</span>
+      </button>
+    </div>
+
+    <!-- Dashboard Quick Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+      
+      <!-- Enrolled Courses Card -->
+      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-4 shadow-xl">
+        <div class="flex items-center justify-between text-slate-400">
+          <span class="text-xs font-bold">ACTIVE COURSES</span>
+          <i class="fa-solid fa-graduation-cap text-cyan-400"></i>
+        </div>
+        <div class="text-2xl font-bold text-white">0</div>
+        <p class="text-[11px] text-slate-500">Explore cloud infrastructure and cybersecurity modules in the shop.</p>
+        <a href="shop.html" class="inline-block text-xs text-cyan-400 hover:underline font-bold">Browse Catalog &rarr;</a>
+      </div>
+
+      <!-- Lab Status Card -->
+      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-4 shadow-xl">
+        <div class="flex items-center justify-between text-slate-400">
+          <span class="text-xs font-bold">SIMULATION LABS</span>
+          <i class="fa-solid fa-server text-cyan-400"></i>
+        </div>
+        <div class="text-2xl font-bold text-emerald-400">ONLINE</div>
+        <p class="text-[11px] text-slate-500">Wazuh SIEM and Cloud Infrastructure labs ready for deployment.</p>
+      </div>
+
+      <!-- Account Status Card -->
+      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-4 shadow-xl">
+        <div class="flex items-center justify-between text-slate-400">
+          <span class="text-xs font-bold">SECURITY STATUS</span>
+          <i class="fa-solid fa-lock text-cyan-400"></i>
+        </div>
+        <div class="text-2xl font-bold text-cyan-400">Protected</div>
+        <p class="text-[11px] text-slate-500">Session secured with encrypted cookies and OTP verification.</p>
+      </div>
+
+    </div>
+
+  </main>
+
+  <!-- Footer Injection Placeholder -->
+  <div id="footer-placeholder"></div>
+
+  <!-- Core App Logic & Dashboard Session Protection Scripts -->
+  <script src="js/app.js"></script>
+  <script src="js/dashboard.js"></script>
+</body>
+</html>
