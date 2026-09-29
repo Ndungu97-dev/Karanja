@@ -4,17 +4,12 @@ const bcrypt = require('bcryptjs');
 // In-memory user store (swap with your database model when ready)
 const users = [];
 
-// Configure Outlook SMTP Transporter
+// Configure Outlook SMTP 
 const transporter = nodemailer.createTransport({
-  host: 'smtp-mail.outlook.com',
-  port: 587,
-  secure: false,
+  service: 'gmail',
   auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS
-  },
-  tls: {
-    ciphers: 'SSLv3'
+    user: process.env.EMAIL_USER, // Your Gmail address
+    pass: process.env.EMAIL_PASS  // Your 16-character Google App Password
   }
 });
 
