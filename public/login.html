@@ -143,6 +143,20 @@ async function handleLogout() {
     }, 1000);
   }
 }
+document.addEventListener("DOMContentLoaded", () => {
+  const urlParams = new URLSearchParams(window.location.search);
+  
+  if (urlParams.get('expired') === 'true') {
+    showToast('Your session has expired. Please log in again.', 'error');
+    // Clean up the URL bar
+    window.history.replaceState({}, document.title, window.location.pathname);
+  }
+  
+  if (urlParams.get('logout') === 'true') {
+    showToast('You have been logged out securely.', 'success');
+    window.history.replaceState({}, document.title, window.location.pathname);
+  }
+});
 
 
   </script>
