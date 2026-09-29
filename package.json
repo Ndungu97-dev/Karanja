@@ -29,6 +29,4 @@
     "nodemailer": "^6.9.13",
     "uuid": "^9.0.1"
   },
-  "author": "Karanja Cyber Solutions",
-  "license": "ISC"
 }
