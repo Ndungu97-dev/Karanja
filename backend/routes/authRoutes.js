@@ -1,24 +1,22 @@
 const express = require('express');
-const { 
-  registerUser, 
-  verifyEmail, 
-  loginStepOne, 
-  verifyOtpAndLogin, 
-  logoutUser, 
-  getUserProfile 
-} = require('../controllers/authController');
-
 const router = express.Router();
 
+// Import every controller explicitly with exact naming match
+const {
+  registerUser,
+  loginStepOne,
+  verifyOtpAndLogin,
+  logoutUser,
+  getUserProfile,
+  deleteAccount
+} = require('../controllers/authController');
+
+// Define API endpoints
 router.post('/register', registerUser);
-router.get('/verify-email', verifyEmail);
-router.post('/login', loginStepOne);
+router.post('/login-step-one', loginStepOne);
 router.post('/verify-otp', verifyOtpAndLogin);
 router.post('/logout', logoutUser);
 router.get('/profile', getUserProfile);
-const { deleteAccount } = require('../controllers/authController');
-
-// Route for a logged-in user to delete their own account
 router.delete('/account', deleteAccount);
 
 module.exports = router;
