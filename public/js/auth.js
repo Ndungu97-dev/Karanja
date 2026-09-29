@@ -9,16 +9,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
   if (loginStepOneForm) {
     loginStepOneForm.addEventListener('submit', handleLoginStepOne);
-  } else {
-    // Fallback if form ID doesn't match: listen globally for login button clicks
-    console.warn('password-login-form ID not found on this page.');
   }
 
   if (otpForm) {
     otpForm.addEventListener('submit', handleVerifyOtp);
   }
 
-  // Check URL params for session notices
+  // URL Session Parameter Notices
   const urlParams = new URLSearchParams(window.location.search);
   if (urlParams.get('expired') === 'true') {
     showToast('Your session has expired. Please log in again.', 'error');
@@ -64,18 +61,10 @@ async function handleLoginStepOne(event) {
   const emailInput = document.getElementById('login-email');
   const passwordInput = document.getElementById('login-password');
 
-  if (!emailInput || !passwordInput) {
-    showToast('Could not find login input fields.', 'error');
-    return;
-  }
+  if (!emailInput || !passwordInput) return;
 
   const email = emailInput.value.trim();
   const password = passwordInput.value;
-
-  if (!email || !password) {
-    showToast('Please enter both email and password.', 'error');
-    return;
-  }
 
   pendingLoginEmail = email;
   showToast('Verifying credentials & sending OTP email...');
@@ -101,7 +90,6 @@ async function handleLoginStepOne(event) {
       showToast(data.message || 'Invalid login credentials.', 'error');
     }
   } catch (err) {
-    console.error('Login error:', err);
     showToast('Network error during login.', 'error');
   }
 }
@@ -137,4 +125,25 @@ async function handleVerifyOtp(event) {
   } catch (err) {
     showToast('Network error during OTP validation.', 'error');
   }
+}
+
+// Helper Toast Notification (if not already defined globally in app.js)
+function showToast(message, type = 'info') {
+  let toastContainer = document.getElementById('toast-container');
+  if (!toastContainer) {
+    toastContainer = document.createElement('div');
+    toastContainer.id = 'toast-container';
+    toastContainer.style.cssText = 'position: fixed; bottom: 20px; right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 10px;';
+    document.body.appendChild(toastContainer);
+  }
+
+  const toast = document.createElement('div');
+  toast.style.cssText = `background: ${type === 'error' ? '#ef4444' : type === 'success' ? '#10b981' : '#06b6d4'}; color: #020617; padding: 12px 20px; border-radius: 8px; font-weight: bold; font-family: monospace; box-shadow: 0 4px 12px rgba(0,0,0,0.3); transition: opacity 0.3s ease;`;
+  toast.innerText = message;
+  toastContainer.appendChild(toast);
+
+  setTimeout(() => {
+    toast.style.opacity = '0';
+    setTimeout(() => toast.remove(), 300);
+  }, 3500);
 }
