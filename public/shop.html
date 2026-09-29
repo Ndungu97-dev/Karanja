@@ -2,65 +2,133 @@
 <html lang="en" class="dark">
 <head>
   <meta charset="UTF-8">
-  <title>Digital Store | Karanja Cyber Solutions</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cyber Academy (20 Courses) | Karanja Cyber Solutions</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 </head>
 <body class="bg-slate-950 text-slate-100 font-sans">
-  <header class="bg-slate-900 border-b border-slate-800">
-    <nav class="max-w-7xl mx-auto px-4 h-20 flex items-center justify-between">
-      <a href="index.html" class="text-xl font-bold text-white">KARANJA <span class="text-cyan-400">CYBER</span></a>
-      <div class="flex gap-6 text-sm">
-        <a href="index.html" class="hover:text-cyan-400">Home</a>
-        <a href="about.html" class="hover:text-cyan-400">About Us</a>
-        <a href="services.html" class="hover:text-cyan-400">Consultancy</a>
-        <a href="shop.html" class="text-cyan-400 font-semibold">Digital Store</a>
-        <a href="contact.html" class="hover:text-cyan-400">Secure Contact</a>
-      </div>
-    </nav>
-  </header>
-
-  <main class="max-w-7xl mx-auto px-4 py-16">
-    <h1 class="text-3xl font-bold text-white mb-2">Hardened Digital Products</h1>
-    <p class="text-slate-400 mb-12">Production-ready playbooks, automation scripts, and defense rule packs.</p>
-
-    <div class="grid md:grid-cols-3 gap-8">
-      <div class="bg-slate-900 rounded-xl border border-slate-800 p-6 flex flex-col justify-between">
-        <div>
-          <span class="text-xs font-mono text-cyan-400 bg-cyan-950 border border-cyan-800 px-2.5 py-1 rounded">Rule Pack</span>
-          <h3 class="text-xl font-bold text-white mt-4 mb-2">Wazuh & YARA SIEM Rule Suite</h3>
-          <p class="text-slate-400 text-sm mb-6">Pre-compiled detection rules tailored for active malware detection and endpoint auditing.</p>
-        </div>
-        <div class="flex items-center justify-between pt-4 border-t border-slate-800">
-          <span class="text-2xl font-bold text-white">$49.00</span>
-          <button onclick="alert('Digital checkout pipeline encrypted and initiating.')" class="bg-cyan-500 hover:bg-cyan-400 text-slate-950 px-4 py-2 rounded font-bold text-sm">Purchase</button>
-        </div>
-      </div>
-
-      <div class="bg-slate-900 rounded-xl border border-slate-800 p-6 flex flex-col justify-between">
-        <div>
-          <span class="text-xs font-mono text-emerald-400 bg-emerald-950 border border-emerald-800 px-2.5 py-1 rounded">Playbook</span>
-          <h3 class="text-xl font-bold text-white mt-4 mb-2">OWASP Top 10 Hardening Guide</h3>
-          <p class="text-slate-400 text-sm mb-6">Step-by-step infrastructure hardening manual for Express, Nginx, and Linux Servers.</p>
-        </div>
-        <div class="flex items-center justify-between pt-4 border-t border-slate-800">
-          <span class="text-2xl font-bold text-white">$29.00</span>
-          <button onclick="alert('Digital checkout pipeline encrypted and initiating.')" class="bg-cyan-500 hover:bg-cyan-400 text-slate-950 px-4 py-2 rounded font-bold text-sm">Purchase</button>
-        </div>
-      </div>
-
-      <div class="bg-slate-900 rounded-xl border border-slate-800 p-6 flex flex-col justify-between">
-        <div>
-          <span class="text-xs font-mono text-blue-400 bg-blue-950 border border-blue-800 px-2.5 py-1 rounded">Automation</span>
-          <h3 class="text-xl font-bold text-white mt-4 mb-2">Automated Recon & Scan Pipeline</h3>
-          <p class="text-slate-400 text-sm mb-6">Containerized script suite integrating Subfinder, FFUF, and Nuclei scanning modules.</p>
-        </div>
-        <div class="flex items-center justify-between pt-4 border-t border-slate-800">
-          <span class="text-2xl font-bold text-white">$79.00</span>
-          <button onclick="alert('Digital checkout pipeline encrypted and initiating.')" class="bg-cyan-500 hover:bg-cyan-400 text-slate-950 px-4 py-2 rounded font-bold text-sm">Purchase</button>
-        </div>
-      </div>
+<!-- TOP EMERGENCY & CONTACT BAR -->
+<div class="bg-slate-950 border-b border-cyan-500/20 py-2 px-4 text-xs font-mono text-slate-300">
+  <div class="max-w-7xl mx-auto flex flex-wrap justify-between items-center gap-2">
+    <div class="flex items-center space-x-4">
+      <span><i class="fa-solid fa-phone text-cyan-400"></i> Call/WhatsApp: <a href="tel:0714436151" class="text-cyan-300 font-bold hover:underline">0714436151</a></span>
+      <span class="hidden md:inline text-slate-500">|</span>
+      <span class="hidden md:inline"><i class="fa-solid fa-shield-halved text-cyan-400"></i> OWASP Top 10 Hardened</span>
     </div>
-  </main>
+    <div class="flex items-center space-x-3">
+      <button onclick="requestPushPermission()" class="text-cyan-400 hover:text-cyan-300 flex items-center gap-1 transition">
+        <i class="fa-solid fa-bell"></i> Enable Security Alerts
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- NAVIGATION BAR -->
+<header class="sticky top-0 z-40 bg-slate-950/90 backdrop-blur-md border-b border-slate-800">
+  <nav class="max-w-7xl mx-auto px-4 h-20 flex items-center justify-between">
+    <a href="/" class="flex items-center space-x-3">
+      <div class="w-10 h-10 rounded-xl bg-cyan-500/10 border border-cyan-500/40 flex items-center justify-center text-cyan-400">
+        <i class="fa-solid fa-terminal text-lg"></i>
+      </div>
+      <span class="text-xl font-bold tracking-tight text-white">KARANJA <span class="text-cyan-400">CYBER</span></span>
+    </a>
+
+    <div class="hidden lg:flex items-center space-x-8 text-sm font-medium">
+      <a href="/" class="text-slate-300 hover:text-cyan-400 transition">Home</a>
+      <a href="about.html" class="text-slate-300 hover:text-cyan-400 transition">About Us</a>
+      <a href="services.html" class="text-slate-300 hover:text-cyan-400 transition">Services</a>
+      <a href="shop.html" class="text-slate-300 hover:text-cyan-400 transition">Academy (20 Courses)</a>
+      <a href="contact.html" class="text-slate-300 hover:text-cyan-400 transition">Contact</a>
+    </div>
+
+    <!-- Dynamic Auth Buttons -->
+    <div id="authNavButtons" class="flex items-center space-x-3">
+      <button onclick="openModal('loginModal')" class="text-xs font-semibold px-4 py-2 rounded-lg border border-slate-700 text-slate-200 hover:border-cyan-500 hover:text-cyan-400 transition">Login</button>
+      <button onclick="openModal('registerModal')" class="text-xs font-bold px-4 py-2 rounded-lg bg-cyan-500 hover:bg-cyan-400 text-slate-950 transition">Register</button>
+    </div>
+    <div id="userNavProfile" class="hidden flex items-center space-x-3">
+      <span id="navUserName" class="text-xs text-cyan-400 font-mono"></span>
+      <button onclick="logoutUser()" class="text-xs font-semibold px-3 py-1.5 rounded bg-red-500/20 text-red-400 hover:bg-red-500/30 transition">Logout</button>
+    </div>
+  </nav>
+</header>
+
+  <section class="py-16">
+    <div class="max-w-7xl mx-auto px-4">
+      <div class="text-center max-w-3xl mx-auto mb-12">
+        <h1 class="text-4xl font-extrabold text-white mb-4">Cybersecurity Academy (20 Courses)</h1>
+        <p class="text-slate-400">Enroll in practical training courses. Click any course to register and purchase.</p>
+      </div>
+      <div id="courseContainer" class="grid sm:grid-cols-2 lg:grid-cols-4 gap-6"></div>
+    </div>
+  </section>
+
+  <!-- Purchase Modal -->
+  <div id="purchaseModal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-800 p-8 rounded-2xl w-full max-w-md relative">
+      <button onclick="closeModal('purchaseModal')" class="absolute top-4 right-4 text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+      <h3 id="modalCourseTitle" class="text-xl font-bold text-cyan-400 mb-2"></h3>
+      <p id="modalCoursePrice" class="text-sm text-slate-300 font-mono mb-6"></p>
+      <form onsubmit="handlePurchase(event)" class="space-y-4">
+        <input type="hidden" id="purchaseCourseId">
+        <input type="email" id="purchaseEmail" placeholder="Your Email Address" required class="w-full px-4 py-3 rounded bg-slate-950 border border-slate-800 text-white outline-none focus:border-cyan-500">
+        <input type="tel" id="purchasePhone" placeholder="Mobile / M-Pesa Phone (0714436151)" required class="w-full px-4 py-3 rounded bg-slate-950 border border-slate-800 text-white outline-none focus:border-cyan-500">
+        <button type="submit" class="w-full py-3 rounded bg-emerald-500 text-slate-950 font-bold">Confirm & Pay</button>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    const courses = [
+      { id: 1, title: 'Ethical Hacking & Pentesting', price: 'KSh 15,000', duration: '8 Weeks', img: 'https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?auto=format&fit=crop&w=500&q=80' },
+      { id: 2, title: 'Certified SOC Analyst', price: 'KSh 18,000', duration: '10 Weeks', img: 'https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&w=500&q=80' },
+      { id: 3, title: 'Web App Security (OWASP)', price: 'KSh 12,000', duration: '6 Weeks', img: 'https://images.unsplash.com/photo-1563986768609-322da13575f3?auto=format&fit=crop&w=500&q=80' },
+      { id: 4, title: 'Cloud Security (AZ-104 & Bicep)', price: 'KSh 20,000', duration: '8 Weeks', img: 'https://images.unsplash.com/photo-1544197150-b99a580bb7a8?auto=format&fit=crop&w=500&q=80' },
+      { id: 5, title: 'Cisco CCST Networking', price: 'KSh 10,000', duration: '5 Weeks', img: 'https://images.unsplash.com/photo-1558494949-ef010cbdcc31?auto=format&fit=crop&w=500&q=80' },
+      { id: 6, title: 'Digital Forensics (DFIR)', price: 'KSh 16,000', duration: '8 Weeks', img: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=500&q=80' },
+      { id: 7, title: 'Bug Bounty Reconnaissance', price: 'KSh 14,000', duration: '6 Weeks', img: 'https://images.unsplash.com/photo-1510511459019-5dda7724fd87?auto=format&fit=crop&w=500&q=80' },
+      { id: 8, title: 'Docker & Container Hardening', price: 'KSh 11,000', duration: '4 Weeks', img: 'https://images.unsplash.com/photo-1605745341112-85968b19335b?auto=format&fit=crop&w=500&q=80' },
+      { id: 9, title: 'Linux Systems Administration', price: 'KSh 9,000', duration: '5 Weeks', img: 'https://images.unsplash.com/photo-1629654297299-c8506221ca97?auto=format&fit=crop&w=500&q=80' },
+      { id: 10, title: 'Wazuh SIEM & YARA Rules', price: 'KSh 15,000', duration: '6 Weeks', img: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=500&q=80' },
+      { id: 11, title: 'Python for Cyber Automation', price: 'KSh 10,000', duration: '5 Weeks', img: 'https://images.unsplash.com/photo-1526379095098-d400fd0bf935?auto=format&fit=crop&w=500&q=80' },
+      { id: 12, title: 'Network Defense & Firewalls', price: 'KSh 13,000', duration: '6 Weeks', img: 'https://images.unsplash.com/photo-1544197150-b99a580bb7a8?auto=format&fit=crop&w=500&q=80' },
+      { id: 13, title: 'API Security & Testing', price: 'KSh 12,500', duration: '4 Weeks', img: 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=500&q=80' },
+      { id: 14, title: 'Red Teaming Operations', price: 'KSh 22,000', duration: '10 Weeks', img: 'https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?auto=format&fit=crop&w=500&q=80' },
+      { id: 15, title: 'Blue Team Defense Strategy', price: 'KSh 17,000', duration: '8 Weeks', img: 'https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&w=500&q=80' },
+      { id: 16, title: 'Applied Cryptography & PKI', price: 'KSh 11,500', duration: '5 Weeks', img: 'https://images.unsplash.com/photo-1563986768609-322da13575f3?auto=format&fit=crop&w=500&q=80' },
+      { id: 17, title: 'Wireless & IoT Security', price: 'KSh 10,500', duration: '4 Weeks', img: 'https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=500&q=80' },
+      { id: 18, title: 'ISO 27001 & NIST Auditing', price: 'KSh 19,000', duration: '7 Weeks', img: 'https://images.unsplash.com/photo-1450133064473-71024230f91b?auto=format&fit=crop&w=500&q=80' },
+      { id: 19, title: 'Malware Reverse Engineering', price: 'KSh 25,000', duration: '12 Weeks', img: 'https://images.unsplash.com/photo-1510511459019-5dda7724fd87?auto=format&fit=crop&w=500&q=80' },
+      { id: 20, title: 'AWS Cloud Security Architect', price: 'KSh 21,000', duration: '8 Weeks', img: 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=500&q=80' }
+    ];
+
+    const courseContainer = document.getElementById('courseContainer');
+    courses.forEach(c => {
+      courseContainer.innerHTML += `
+        <div class="bg-slate-900 rounded-2xl border border-slate-800 overflow-hidden flex flex-col justify-between hover:border-cyan-500/50 transition">
+          <div>
+            <img src="${c.img}" class="w-full h-36 object-cover">
+            <div class="p-5">
+              <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-cyan-950 text-cyan-400 border border-cyan-800">${c.duration}</span>
+              <h4 class="text-base font-bold text-white mt-2">${c.title}</h4>
+              <p class="text-sm font-mono text-emerald-400 mt-2">${c.price}</p>
+            </div>
+          </div>
+          <div class="px-5 pb-5">
+            <button onclick="openPurchaseModal(${c.id}, '${c.title}', '${c.price}')" class="w-full py-2.5 rounded-lg bg-cyan-500 text-slate-950 font-bold text-xs">Enroll & Purchase</button>
+          </div>
+        </div>
+      `;
+    });
+
+    function openPurchaseModal(id, title, price) {
+      document.getElementById('purchaseCourseId').value = id;
+      document.getElementById('modalCourseTitle').innerText = title;
+      document.getElementById('modalCoursePrice').innerText = price;
+      document.getElementById('purchaseModal').classList.remove('hidden');
+    }
+  </script>
+  <script src="/js/app.js"></script>
 </body>
 </html>
