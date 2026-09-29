@@ -1,177 +1,141 @@
-/**
- * Karanja Cyber Solutions - Production Core Server
- * OWASP Top 10 Hardened Architecture + Anti-Scanner Protection
- */
-
 const express = require('express');
+const session = require('express-session');
 const path = require('path');
-const fs = require('fs');
-const helmet = require('helmet');
-const rateLimit = require('express-rate-limit');
-const { body, validationResult } = require('express-validator');
-const winston = require('winston');
+const bcrypt = require('bcryptjs');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Winston Security Logging
-const logger = winston.createLogger({
-  level: 'info',
-  format: winston.format.combine(
-    winston.format.timestamp(),
-    winston.format.json()
-  ),
-  transports: [ new winston.transports.Console() ]
-});
+// In-Memory Database (Replace with MongoDB/PostgreSQL in production)
+const users = []; // { id, email, passwordHash, fullName, createdAt }
+const activeSessions = new Map(); // sessionId -> { userId, email, loginTime, ip }
 
-// 1. OWASP Security Headers & CSP Configuration
-app.use(
-  helmet({
-    contentSecurityPolicy: {
-      directives: {
-        defaultSrc: ["'self'"],
-        scriptSrc: ["'self'", "https://cdn.tailwindcss.com", "'unsafe-inline'"],
-        styleSrc: ["'self'", "https://cdn.tailwindcss.com", "https://cdnjs.cloudflare.com", "'unsafe-inline'"],
-        fontSrc: ["'self'", "https://cdnjs.cloudflare.com"],
-        imgSrc: ["'self'", "data:", "https://images.unsplash.com"],
-        connectSrc: ["'self'"]
-      }
-    },
-    crossOriginEmbedderPolicy: false,
-    xPoweredBy: false
-  })
-);
+// Middleware
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+app.use(express.static(path.join(__dirname, 'public')));
 
-app.use(express.json({ limit: '20kb' }));
-app.use(express.urlencoded({ extended: true, limit: '20kb' }));
+app.use(session({
+  secret: 'karanja_cyber_secure_secret_key_2026',
+  resave: false,
+  saveUninitialized: false,
+  cookie: { secure: false, maxAge: 24 * 60 * 60 * 1000 } // 24 hours
+}));
 
-// 2. Anti-Reconnaissance & Vulnerability Scanner Blocking Middleware
-const blockedUserAgents = [/nikto/i, /sqlmap/i, /nuclei/i, /nmap/i, /masscan/i, /dirbuster/i, /gobuster/i, /ffuf/i, /acunetix/i, /netsparker/i];
+// --- AUTHENTICATION API ROUTES ---
 
-app.use((req, res, next) => {
-  const userAgent = req.headers['user-agent'] || '';
-  for (const pattern of blockedUserAgents) {
-    if (pattern.test(userAgent)) {
-      logger.warn('Automated Scanner Blocked', { ip: req.ip, userAgent });
-      return res.status(403).json({ error: 'Access Denied: Automated reconnaissance tool detected.' });
+// Register
+app.post('/api/auth/register', async (req, res) => {
+  try {
+    const { fullName, email, password } = req.body;
+    if (!fullName || !email || !password) {
+      return res.status(400).json({ success: false, message: 'All fields are required.' });
     }
+
+    const existingUser = users.find(u => u.email === email);
+    if (existingUser) {
+      return res.status(400).json({ success: false, message: 'Email is already registered.' });
+    }
+
+    const passwordHash = await bcrypt.hash(password, 10);
+    const newUser = {
+      id: Date.now().toString(),
+      fullName,
+      email,
+      passwordHash,
+      createdAt: new Date().toISOString()
+    };
+
+    users.push(newUser);
+    
+    // Auto login after register
+    req.session.userId = newUser.id;
+    req.session.email = newUser.email;
+    activeSessions.set(req.sessionID, { userId: newUser.id, email: newUser.email, loginTime: new Date(), ip: req.ip });
+
+    res.json({ success: true, message: 'Registration successful!', user: { fullName: newUser.fullName, email: newUser.email } });
+  } catch (err) {
+    res.status(500).json({ success: false, message: 'Server error during registration.' });
   }
-  next();
 });
 
-// 3. Static File Serving (Supports root and public/ subfolder)
-const staticDir = fs.existsSync(path.join(__dirname, 'public'))
-  ? path.join(__dirname, 'public')
-  : __dirname;
+// Login
+app.post('/api/auth/login', async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    const user = users.find(u => u.email === email);
 
-app.use(express.static(staticDir));
+    if (!user || !(await bcrypt.compare(password, user.passwordHash))) {
+      return res.status(401).json({ success: false, message: 'Invalid email or password.' });
+    }
 
-// 4. Rate Limiting Rules
-const globalLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 mins
-  max: 200,
-  message: { success: false, error: 'Too many requests. Please try again later.' }
-});
+    req.session.userId = user.id;
+    req.session.email = user.email;
+    activeSessions.set(req.sessionID, { userId: user.id, email: user.email, loginTime: new Date(), ip: req.ip });
 
-const authLimiter = rateLimit({
-  windowMs: 60 * 60 * 1000, // 1 hour
-  max: 10,
-  message: { success: false, error: 'Too many login/registration attempts. Account temporarily locked.' }
-});
-
-app.use('/api/', globalLimiter);
-app.use('/api/auth/', authLimiter);
-
-// In-Memory Database
-const users = [];
-
-// 5. Security & Indexing Endpoints
-app.get('/.well-known/security.txt', (req, res) => {
-  res.type('text/plain');
-  res.send(`Contact: tel:+254714436151\nContact: mailto:security@karanjacyber.co.ke\nExpires: 2027-12-31T23:59:59.000Z\nPolicy: https://karanja.onrender.com/security-policy\nPreferred-Languages: en, sw`);
-});
-
-app.get('/robots.txt', (req, res) => {
-  res.type('text/plain');
-  res.send(`User-agent: *\nAllow: /\nDisallow: /api/\nDisallow: /admin/\nSitemap: https://karanja.onrender.com/sitemap.xml`);
-});
-
-// 6. Page Routes
-const sendPage = (res, pageName) => {
-  const filePath = path.join(staticDir, pageName);
-  if (fs.existsSync(filePath)) res.sendFile(filePath);
-  else res.status(404).send(`<h1>404 - ${pageName} not found</h1>`);
-};
-
-app.get('/', (req, res) => sendPage(res, 'index.html'));
-app.get('/about', (req, res) => sendPage(res, 'about.html'));
-app.get('/services', (req, res) => sendPage(res, 'services.html'));
-app.get('/shop', (req, res) => sendPage(res, 'shop.html'));
-app.get('/contact', (req, res) => sendPage(res, 'contact.html'));
-
-// 7. API Endpoints (Auth, Purchase & Contact)
-app.post('/api/auth/register', [
-  body('fullName').trim().isLength({ min: 3 }).escape(),
-  body('email').isEmail().normalizeEmail(),
-  body('phone').trim().isLength({ min: 10 }).escape(),
-  body('password').isLength({ min: 6 })
-], (req, res) => {
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) return res.status(400).json({ success: false, errors: errors.array() });
-
-  const { fullName, email, phone, password } = req.body;
-  if (users.find(u => u.email === email)) {
-    return res.status(400).json({ success: false, message: 'Account already exists.' });
+    res.json({ success: true, message: 'Login successful!', user: { fullName: user.fullName, email: user.email } });
+  } catch (err) {
+    res.status(500).json({ success: false, message: 'Server error during login.' });
   }
-
-  const newUser = { id: Date.now(), fullName, email, phone, password };
-  users.push(newUser);
-  logger.info('User Registered', { email, phone });
-
-  res.status(201).json({ success: true, message: 'Registration successful! You can now login.', user: { fullName, email, phone } });
 });
 
-app.post('/api/auth/login', [
-  body('email').isEmail().normalizeEmail(),
-  body('password').notEmpty()
-], (req, res) => {
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) return res.status(400).json({ success: false, errors: errors.array() });
-
-  const { email, password } = req.body;
-  const user = users.find(u => u.email === email && u.password === password);
-
-  if (!user) return res.status(401).json({ success: false, message: 'Invalid credentials.' });
-
-  res.status(200).json({ success: true, message: 'Login successful!', user: { fullName: user.fullName, email: user.email, phone: user.phone } });
+// Logout
+app.post('/api/auth/logout', (req, res) => {
+  activeSessions.delete(req.sessionID);
+  req.session.destroy(err => {
+    if (err) return res.status(500).json({ success: false, message: 'Could not log out.' });
+    res.clearCookie('connect.sid');
+    res.json({ success: true, message: 'Logged out successfully.' });
+  });
 });
 
-app.post('/api/courses/purchase', [
-  body('courseId').notEmpty(),
-  body('courseName').notEmpty(),
-  body('userEmail').isEmail(),
-  body('paymentPhone').notEmpty()
-], (req, res) => {
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) return res.status(400).json({ success: false, errors: errors.array() });
-
-  const { courseName, paymentPhone } = req.body;
-  res.status(200).json({ success: true, message: `Enrollment initiated for ${courseName}! Confirmation sent to ${paymentPhone}.` });
+// Current User State Check
+app.get('/api/auth/session', (req, res) => {
+  if (!req.session.userId) {
+    return res.json({ loggedIn: false });
+  }
+  const user = users.find(u => u.id === req.session.userId);
+  res.json({ loggedIn: true, user: user ? { fullName: user.fullName, email: user.email } : null });
 });
 
-app.post('/api/contact', [
-  body('fullName').trim().isLength({ min: 2 }).escape(),
-  body('email').isEmail().normalizeEmail(),
-  body('message').trim().isLength({ min: 5 }).escape()
-], (req, res) => {
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) return res.status(400).json({ success: false, errors: errors.array() });
-
-  res.status(200).json({ success: true, message: 'Message sent securely to 0714436151.' });
+// Active Sessions List (For dashboard / session management)
+app.get('/api/auth/sessions', (req, res) => {
+  if (!req.session.userId) {
+    return res.status(401).json({ success: false, message: 'Unauthorized' });
+  }
+  const userSessions = Array.from(activeSessions.entries())
+    .filter(([sid, sess]) => sess.userId === req.session.userId)
+    .map(([sid, sess]) => ({
+      sessionId: sid.substring(0, 8) + '...',
+      loginTime: sess.loginTime,
+      ip: sess.ip,
+      current: sid === req.sessionID
+    }));
+  res.json({ success: true, sessions: userSessions });
 });
 
-app.get('*', (req, res) => sendPage(res, 'index.html'));
+// Contact Form Handler
+app.post('/api/contact', (req, res) => {
+  const { fullName, email, message } = req.body;
+  console.log(`[CONTACT] From ${fullName} (${email}): ${message}`);
+  res.json({ success: true, message: 'Thank you! Your message has been received. We will contact you shortly.' });
+});
+
+// Checkout Handler
+app.post('/api/checkout', (req, res) => {
+  const { cart, total } = req.body;
+  if (!cart || cart.length === 0) {
+    return res.status(400).json({ success: false, message: 'Cart is empty.' });
+  }
+  console.log(`[CHECKOUT] Order total: KSh ${total}, Items: ${cart.length}`);
+  res.json({ success: true, message: 'Order placed successfully! Our team will reach out via 0714436151 for completion.' });
+});
+
+// Fallback HTML routing
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
 
 app.listen(PORT, () => {
-  console.log(`[+] Karanja Cyber Solutions running on port ${PORT}`);
+  console.log(`Karanja Cyber Solutions server running on http://localhost:${PORT}`);
 });
