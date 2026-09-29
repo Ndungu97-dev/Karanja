@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <title>Secure Contact | Karanja Cyber Solutions</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+</head>
+<body class="bg-slate-950 text-slate-100 font-sans">
+  <header class="bg-slate-900 border-b border-slate-800">
+    <nav class="max-w-7xl mx-auto px-4 h-20 flex items-center justify-between">
+      <a href="index.html" class="text-xl font-bold text-white">KARANJA <span class="text-cyan-400">CYBER</span></a>
+      <div class="flex gap-6 text-sm">
+        <a href="index.html" class="hover:text-cyan-400">Home</a>
+        <a href="about.html" class="hover:text-cyan-400">About Us</a>
+        <a href="services.html" class="hover:text-cyan-400">Consultancy</a>
+        <a href="shop.html" class="hover:text-cyan-400">Digital Store</a>
+        <a href="contact.html" class="text-cyan-400 font-semibold">Secure Contact</a>
+      </div>
+    </nav>
+  </header>
+
+  <main class="max-w-3xl mx-auto px-4 py-16">
+    <div class="text-center mb-10">
+      <h1 class="text-3xl font-bold text-white">Secure Intake Channel</h1>
+      <p class="text-slate-400 text-sm mt-2">Submissions are sanitized and protected against OWASP A03 / A07 vulnerability risks.</p>
+    </div>
+
+    <form id="contactForm" class="bg-slate-900 border border-slate-800 p-8 rounded-xl shadow-xl space-y-6">
+      <div id="statusAlert" class="hidden p-4 rounded text-sm font-medium"></div>
+
+      <div>
+        <label class="block text-xs font-mono uppercase text-slate-400 mb-2">Full Name</label>
+        <input type="text" id="fullName" required class="w-full bg-slate-950 border border-slate-800 rounded px-4 py-3 text-white focus:outline-none focus:border-cyan-500">
+      </div>
+
+      <div class="grid md:grid-cols-2 gap-6">
+        <div>
+          <label class="block text-xs font-mono uppercase text-slate-400 mb-2">Email Address</label>
+          <input type="email" id="email" required class="w-full bg-slate-950 border border-slate-800 rounded px-4 py-3 text-white focus:outline-none focus:border-cyan-500">
+        </div>
+        <div>
+          <label class="block text-xs font-mono uppercase text-slate-400 mb-2">Company / Organization</label>
+          <input type="text" id="company" class="w-full bg-slate-950 border border-slate-800 rounded px-4 py-3 text-white focus:outline-none focus:border-cyan-500">
+        </div>
+      </div>
+
+      <div>
+        <label class="block text-xs font-mono uppercase text-slate-400 mb-2">Service Requirement</label>
+        <select id="serviceType" class="w-full bg-slate-950 border border-slate-800 rounded px-4 py-3 text-white focus:outline-none focus:border-cyan-500">
+          <option value="pentest">Penetration Testing</option>
+          <option value="soc">SOC Monitoring Setup</option>
+          <option value="cloud">Cloud Security Architecture</option>
+          <option value="forensics">Digital Forensics & Incident Response</option>
+          <option value="general">General Consultancy</option>
+        </select>
+      </div>
+
+      <div>
+        <label class="block text-xs font-mono uppercase text-slate-400 mb-2">Project Scope / Message</label>
+        <textarea id="message" rows="5" required class="w-full bg-slate-950 border border-slate-800 rounded px-4 py-3 text-white focus:outline-none focus:border-cyan-500"></textarea>
+      </div>
+
+      <button type="submit" class="w-full bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold py-3.5 rounded transition">
+        Encrypt & Send Inquiry
+      </button>
+    </form>
+  </main>
+
+  <script>
+    document.getElementById('contactForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const statusAlert = document.getElementById('statusAlert');
+      
+      const payload = {
+        fullName: document.getElementById('fullName').value,
+        email: document.getElementById('email').value,
+        company: document.getElementById('company').value,
+        serviceType: document.getElementById('serviceType').value,
+        message: document.getElementById('message').value
+      };
+
+      try {
+        const response = await fetch('/api/contact', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        const data = await response.json();
+        statusAlert.classList.remove('hidden');
+
+        if (response.ok) {
+          statusAlert.className = "p-4 rounded text-sm font-medium bg-emerald-950 text-emerald-300 border border-emerald-800 mb-6";
+          statusAlert.innerText = data.message;
+          document.getElementById('contactForm').reset();
+        } else {
+          statusAlert.className = "p-4 rounded text-sm font-medium bg-red-950 text-red-300 border border-red-800 mb-6";
+          statusAlert.innerText = data.errors ? data.errors.map(e => e.msg).join(', ') : data.error;
+        }
+      } catch (err) {
+        statusAlert.classList.remove('hidden');
+        statusAlert.className = "p-4 rounded text-sm font-medium bg-red-950 text-red-300 border border-red-800 mb-6";
+        statusAlert.innerText = "Network transmission error. Please retry.";
+      }
+    });
+  </script>
+</body>
+</html>
