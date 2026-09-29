@@ -16,15 +16,28 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, "public"))); 
 // (Change "public" to wherever your HTML files are saved)
 
-// Session configuration
+// Session configuration with 1-hour inactivity timeout
 app.use(
   session({
     secret: process.env.SESSION_SECRET || "karanja_academy_secret_key",
     resave: false,
     saveUninitialized: false,
-    cookie: { secure: process.env.NODE_ENV === "production" }
+    cookie: { 
+      secure: process.env.NODE_ENV === "production",
+      httpOnly: true,
+      maxAge: 60 * 60 * 1000 // 1 hour in milliseconds
+    }
   })
 );
+
+// Session activity middleware - reset session timeout on each request
+app.use((req, res, next) => {
+  if (req.session.user) {
+    // Reset the session cookie expiration on each authenticated request
+    req.session.touch();
+  }
+  next();
+});
 
 // Database Health-Check Route
 app.get("/api/health", async (req, res) => {
