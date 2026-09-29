@@ -1,52 +1,40 @@
-require('dotenv').config();
-const express = require('express');
-const session = require('express-session');
-const path = require('path');
-const mongoose = require('mongoose');
-
-const authRoutes = require('./backend/routes/authRoutes');
+require("dotenv").config();
+const express = require("express");
+const session = require("express-session");
+const authRoutes = require("./routes/authRoutes");
+const sql = require("./config/db");
 
 const app = express();
-const PORT = process.env.PORT || 3000;
-
-// Trust proxy for Render deployment sessions
-app.set('trust proxy', 1);
 
 // Middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Session Configuration
-app.use(session({
-  secret: process.env.SESSION_SECRET || 'fallback_secret',
-  resave: false,
-  saveUninitialized: false,
-  cookie: {
-    secure: process.env.NODE_ENV === 'production',
-    httpOnly: true,
-    sameSite: 'lax',
-    maxAge: 30 * 60 * 1000
+// Session configuration
+app.use(
+  session({
+    secret: process.env.SESSION_SECRET || "karanja_academy_secret_key",
+    resave: false,
+    saveUninitialized: false,
+    cookie: { secure: process.env.NODE_ENV === "production" }
+  })
+);
+
+// Database Health-Check Route
+app.get("/api/health", async (req, res) => {
+  try {
+    const result = await sql`SELECT NOW()`;
+    res.status(200).json({ status: "healthy", db_time: result[0].now });
+  } catch (err) {
+    console.error("Database health check error:", err);
+    res.status(500).json({ status: "unhealthy", error: err.message });
   }
-}));
-
-// Static Files
-app.use(express.static(path.join(__dirname, 'public')));
-
-// API Routes
-app.use('/api/auth', authRoutes);
-
-app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'login.html'));
 });
 
-// Connect to MongoDB Atlas first, then start server
-mongoose.connect(process.env.MONGO_URI)
-  .then(() => {
-    console.log('Connected successfully to MongoDB Atlas');
-    app.listen(PORT, () => {
-      console.log(`Karanja Cyber Academy server running on port ${PORT}`);
-    });
-  })
-  .catch(err => {
-    console.error('MongoDB connection failure:', err);
-  });
+// API Routes
+app.use("/api/auth", authRoutes);
+
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log(`Karanja Cyber Academy server running on port ${PORT}`);
+});
