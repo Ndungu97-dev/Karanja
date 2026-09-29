@@ -18,6 +18,8 @@ const transporter = nodemailer.createTransport({
   }
 });
 
+
+
 // --- 1. USER REGISTRATION ---
 exports.registerUser = async (req, res) => {
   try {
@@ -158,3 +160,4 @@ exports.getUserProfile = (req, res) => {
 exports.verifyEmail = (req, res) => {
   return res.status(200).json({ success: true, message: 'Email verification route active.' });
 };
+
