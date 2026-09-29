@@ -7,7 +7,6 @@ document.addEventListener("DOMContentLoaded", async () => {
   updateCartCount();
 });
 
-// --- COMPONENT LOADER (Supports both placeholder and container IDs) ---
 async function loadLayoutComponents() {
   try {
     const navContainer = document.getElementById('nav-placeholder') || document.getElementById('nav-container');
@@ -16,6 +15,7 @@ async function loadLayoutComponents() {
       if (res.ok) {
         navContainer.innerHTML = await res.text();
         highlightActiveNavLink();
+        setupMobileMenuToggle(); // <-- Wires up the mobile hamburger button!
       }
     }
 
@@ -31,6 +31,19 @@ async function loadLayoutComponents() {
   }
 }
 
+// --- Mobile Hamburger Menu Toggle Handler ---
+function setupMobileMenuToggle() {
+  const btn = document.getElementById('mobile-menu-btn');
+  const menu = document.getElementById('mobile-menu');
+
+  if (btn && menu) {
+    btn.addEventListener('click', () => {
+      menu.classList.toggle('hidden');
+    });
+  }
+}
+
+// --- COMPONENT LOADER (Supports both placeholder and container IDs) 
 function highlightActiveNavLink() {
   const currentPath = window.location.pathname.split('/').pop() || 'index.html';
   document.querySelectorAll('nav a, header a').forEach(link => {
@@ -91,3 +104,5 @@ function updateCartCount() {
     el.style.display = totalItems > 0 ? 'inline-block' : 'none';
   });
 }
+
+
