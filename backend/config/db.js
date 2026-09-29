@@ -1,4 +1,4 @@
-require("dotenv").config();
+
 const { neon } = require("@neondatabase/serverless");
 
 // This automatically reads DATABASE_URL from your environment variables (or Render)
