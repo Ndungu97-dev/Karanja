@@ -1,19 +1,19 @@
 const nodemailer = require('nodemailer');
 const bcrypt = require('bcryptjs');
 
-// In-memory user store (swap with your database model when ready)
+// In-memory user store (volatile on Render - wiped on server restart)
 const users = [];
 
-// Configure Outlook SMTP 
+// Configure Email Transporter (Using Gmail as an example)
 const transporter = nodemailer.createTransport({
   service: 'gmail',
   auth: {
-    user: process.env.EMAIL_USER, // Your Gmail address
-    pass: process.env.EMAIL_PASS  // Your 16-character Google App Password
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS
   }
 });
 
-// --- 1. USER REGISTRATION (Sends Welcome Email) ---
+// --- 1. USER REGISTRATION (Non-blocking Email Dispatch) ---
 exports.registerUser = async (req, res) => {
   try {
     const { fullName, email, password } = req.body;
@@ -38,25 +38,27 @@ exports.registerUser = async (req, res) => {
     };
     users.push(newUser);
 
-    // Dispatch Welcome Email via Outlook
-    await transporter.sendMail({
-      from: `"Karanja Cyber Academy" <${process.env.EMAIL_USER}>`,
-      to: email,
-      subject: 'Welcome to Karanja Cyber Solutions & Academy',
-      html: `
-        <div style="font-family: monospace; background: #020617; color: #f8fafc; padding: 24px; border-radius: 12px; border: 1px solid #1e293b;">
-          <h2 style="color: #06b6d4;">Welcome, ${fullName}!</h2>
-          <p>Your account has been successfully created on Karanja Cyber Solutions & Academy.</p>
-          <p>You can now log in using your credentials. A secure 6-digit OTP will be emailed to you upon login.</p>
-          <hr style="border-color: #1e293b; margin: 20px 0;">
-          <p style="font-size: 11px; color: #64748b;">Secure Cloud & Cyber Operations Platform • 2026</p>
-        </div>
-      `
-    });
+    // Non-blocking email try/catch block so SMTP issues don't crash registration
+    try {
+      await transporter.sendMail({
+        from: `"Karanja Cyber Academy" <${process.env.EMAIL_USER}>`,
+        to: email,
+        subject: 'Welcome to Karanja Cyber Solutions & Academy',
+        html: `
+          <div style="font-family: monospace; background: #020617; color: #f8fafc; padding: 24px; border-radius: 12px; border: 1px solid #1e293b;">
+            <h2 style="color: #06b6d4;">Welcome, ${fullName}!</h2>
+            <p>Your account has been successfully created on Karanja Cyber Solutions & Academy.</p>
+            <p>You can now log in using your credentials.</p>
+          </div>
+        `
+      });
+    } catch (emailErr) {
+      console.error('SMTP Email dispatch failed (Account created anyway):', emailErr.message);
+    }
 
-    return res.status(200).json({ success: true, message: 'Registration successful! Welcome email sent.' });
+    return res.status(200).json({ success: true, message: 'Registration successful! You can now log in.' });
   } catch (err) {
-    console.error('Registration error:', err);
+    console.error('Registration critical error:', err);
     return res.status(500).json({ success: false, message: 'Server error during registration.' });
   }
 };
@@ -76,33 +78,36 @@ exports.loginStepOne = async (req, res) => {
     user.otp = otp;
     user.otpExpiry = Date.now() + 10 * 60 * 1000; // Valid for 10 minutes
 
-    // Dispatch OTP Email via Outlook
-    await transporter.sendMail({
-      from: `"Karanja Cyber Academy Security" <${process.env.EMAIL_USER}>`,
-      to: email,
-      subject: 'Your Login Security OTP Code',
-      html: `
-        <div style="font-family: monospace; background: #020617; color: #f8fafc; padding: 24px; border-radius: 12px; border: 1px solid #1e293b;">
-          <h3 style="color: #06b6d4;">Authentication Verification</h3>
-          <p>Your 6-digit login OTP code is:</p>
-          <div style="font-size: 24px; font-weight: bold; color: #06b6d4; background: #0f172a; padding: 12px; text-align: center; border-radius: 8px; letter-spacing: 4px; margin: 16px 0;">
-            ${otp}
+    // Dispatch OTP Email
+    try {
+      await transporter.sendMail({
+        from: `"Karanja Cyber Academy Security" <${process.env.EMAIL_USER}>`,
+        to: email,
+        subject: 'Your Login Security OTP Code',
+        html: `
+          <div style="font-family: monospace; background: #020617; color: #f8fafc; padding: 24px; border-radius: 12px; border: 1px solid #1e293b;">
+            <h3 style="color: #06b6d4;">Authentication Verification</h3>
+            <p>Your 6-digit login OTP code is:</p>
+            <div style="font-size: 24px; font-weight: bold; color: #06b6d4; background: #0f172a; padding: 12px; text-align: center; border-radius: 8px; letter-spacing: 4px; margin: 16px 0;">
+              ${otp}
+            </div>
+            <p>This security code will expire in 10 minutes.</p>
           </div>
-          <p>This security code will expire in 10 minutes.</p>
-          <hr style="border-color: #1e293b; margin: 20px 0;">
-          <p style="font-size: 11px; color: #64748b;">If you did not request this login, please secure your account immediately.</p>
-        </div>
-      `
-    });
+        `
+      });
+    } catch (emailErr) {
+      console.error('OTP Email dispatch failed:', emailErr.message);
+      return res.status(500).json({ success: false, message: 'Failed to send OTP email. Check email credentials.' });
+    }
 
     return res.status(200).json({ success: true, message: 'Password verified. 6-digit OTP sent to your email.' });
   } catch (err) {
     console.error('Login Step 1 error:', err);
-    return res.status(500).json({ success: false, message: 'Failed to dispatch OTP email. Check SMTP settings.' });
+    return res.status(500).json({ success: false, message: 'Server error during login.' });
   }
 };
 
-// --- 3. LOGIN STEP 2 (Verify Email OTP & Initialize Session) ---
+// --- 3. LOGIN STEP 2 (Verify OTP & Initialize Session) ---
 exports.verifyOtpAndLogin = (req, res) => {
   try {
     const { email, otp } = req.body;
@@ -112,11 +117,9 @@ exports.verifyOtpAndLogin = (req, res) => {
       return res.status(400).json({ success: false, message: 'Invalid or expired OTP code.' });
     }
 
-    // Clear OTP state after successful validation
     user.otp = null;
     user.otpExpiry = null;
 
-    // Establish secure session
     req.session.user = { 
       fullName: user.fullName, 
       email: user.email, 
@@ -133,55 +136,31 @@ exports.verifyOtpAndLogin = (req, res) => {
 // --- 4. LOGOUT ---
 exports.logoutUser = (req, res) => {
   req.session.destroy(err => {
-    if (err) {
-      return res.status(500).json({ success: false, message: 'Could not log out.' });
-    }
+    if (err) return res.status(500).json({ success: false, message: 'Could not log out.' });
     res.clearCookie('connect.sid');
     return res.status(200).json({ success: true, message: 'Logged out successfully.' });
   });
 };
 
-// --- 5. GET USER PROFILE (Session Check) ---
+// --- 5. GET USER PROFILE ---
 exports.getUserProfile = (req, res) => {
-  if (!req.session.user) {
-    return res.status(401).json({ success: false, message: 'Unauthorized session.' });
-  }
+  if (!req.session.user) return res.status(401).json({ success: false, message: 'Unauthorized session.' });
   return res.status(200).json({ success: true, user: req.session.user });
 };
 
-// --- 6. EMAIL VERIFICATION STUB ---
-exports.verifyEmail = (req, res) => {
-  return res.status(200).json({ success: true, message: 'Email verification route active.' });
-};
-
-// --- DELETE LOGGED-IN USER ACCOUNT ---
+// --- 6. DELETE ACCOUNT ---
 exports.deleteAccount = (req, res) => {
   try {
-    // Ensure user is logged in via session
-    if (!req.session.user) {
-      return res.status(401).json({ success: false, message: 'Unauthorized.' });
-    }
-
+    if (!req.session.user) return res.status(401).json({ success: false, message: 'Unauthorized.' });
     const userEmail = req.session.user.email;
-    const userIndex = users.findIndex(u => u.email === userEmail);
+    const index = users.findIndex(u => u.email === userEmail);
+    if (index !== -1) users.splice(index, 1);
 
-    if (userIndex === -1) {
-      return res.status(404).json({ success: false, message: 'User not found.' });
-    }
-
-    // Remove user from the in-memory array
-    users.splice(userIndex, 1);
-
-    // Destroy session and clear cookie
     req.session.destroy(err => {
-      if (err) {
-        return res.status(500).json({ success: false, message: 'Error closing session.' });
-      }
       res.clearCookie('connect.sid');
       return res.status(200).json({ success: true, message: 'Account deleted successfully.' });
     });
   } catch (err) {
-    console.error('Delete account error:', err);
-    return res.status(500).json({ success: false, message: 'Server error during account deletion.' });
+    return res.status(500).json({ success: false, message: 'Server error during deletion.' });
   }
 };
