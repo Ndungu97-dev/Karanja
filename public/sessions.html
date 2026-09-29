@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en" class="dark scroll-smooth">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Active Sessions | Karanja Cyber Solutions</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+</head>
+<body class="bg-slate-950 text-slate-100 font-sans flex flex-col min-h-screen">
+
+  <div id="shared-header"></div>
+  <div id="shared-modals"></div>
+  <div id="shared-cart-drawer"></div>
+
+  <main class="flex-grow max-w-4xl mx-w-4xl mx-auto px-4 py-12 w-full">
+    <div class="mb-8">
+      <h1 class="text-3xl font-black text-white">Active Login Sessions</h1>
+      <p class="text-slate-400 text-xs mt-1">Review your active browser and device connections.</p>
+    </div>
+
+    <div id="sessionsList" class="space-y-4">
+      <!-- Injected dynamically -->
+    </div>
+  </main>
+
+  <script src="/js/app.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', async () => {
+      const container = document.getElementById('sessionsList');
+      try {
+        const res = await fetch('/api/auth/sessions');
+        const data = await res.json();
+        if (!data.success) {
+          container.innerHTML = `<p class="text-xs text-red-400">Please <a href="login.html" class="underline">login</a> to view active sessions.</p>`;
+          return;
+        }
+
+        container.innerHTML = data.sessions.map(s => `
+          <div class="p-5 rounded-2xl bg-slate-900 border ${s.current ? 'border-cyan-500/50' : 'border-slate-800'} flex items-center justify-between">
+            <div class="flex items-center gap-4">
+              <div class="w-10 h-10 rounded-xl bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-cyan-400">
+                <i class="fa-solid fa-laptop"></i>
+              </div>
+              <div>
+                <p class="text-xs font-mono text-white">Session ID: ${s.sessionId}</p>
+                <p class="text-[10px] text-slate-500 mt-1">Logged in: ${new Date(s.loginTime).toLocaleString()} | IP: ${s.ip}</p>
+              </div>
+            </div>
+            ${s.current ? '<span class="text-[10px] font-mono px-3 py-1 rounded-full bg-cyan-950 text-cyan-400 border border-cyan-800">Current Session</span>' : ''}
+          </div>
+        `).join('');
+      } catch(e) {
+        container.innerHTML = `<p class="text-xs text-slate-500">Could not load active sessions.</p>`;
+      }
+    });
+  </script>
+</body>
+</html>
