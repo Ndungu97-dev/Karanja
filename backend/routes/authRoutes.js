@@ -1,5 +1,4 @@
 const express = require('express');
-const { body } = require('express-validator');
 const { 
   registerUser, 
   verifyEmail, 
@@ -11,12 +10,7 @@ const {
 
 const router = express.Router();
 
-router.post('/register', [
-  body('fullName').trim().escape().notEmpty().withMessage('Full name is required.'),
-  body('email').isEmail().normalizeEmail().withMessage('Valid email required.'),
-  body('password').isLength({ min: 6 }).withMessage('Password must be at least 6 characters.')
-], registerUser);
-
+router.post('/register', registerUser);
 router.get('/verify-email', verifyEmail);
 router.post('/login', loginStepOne);
 router.post('/verify-otp', verifyOtpAndLogin);
