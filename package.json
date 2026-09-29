@@ -19,6 +19,16 @@
     "winston": "^3.13.0",
     "cors": "^2.8.5",
     "express": "^4.19.2",
-    "express-session": "^1.18.0"
-  }
+    "express-session": "^1.18.0",
+    "bcrypt": "^5.1.1",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "express-session": "^1.18.0",
+    "express-validator": "^7.0.1",
+    "nodemailer": "^6.9.13",
+    "uuid": "^9.0.1"
+  },
+  "author": "Karanja Cyber Solutions",
+  "license": "ISC"
 }
