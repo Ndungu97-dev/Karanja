@@ -21,9 +21,11 @@
     "jsonwebtoken": "^9.0.2",
     "nodemailer": "^6.9.13",
     "uuid": "^9.0.1",
-    "winston": "^3.13.0"
+    "winston": "^3.13.0",
+    "express-rate-limit": "^7.2.0"
   },
   "devDependencies": {
     "nodemon": "^3.1.7"
-  }
+  },
+   "author": "Karanja Cyber Solutions"
 }
