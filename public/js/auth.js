@@ -33,12 +33,12 @@ async function handleRegister(event) {
   const emailInput = document.getElementById('reg-email');
   const passwordInput = document.getElementById('reg-password');
 
-  const fullName = fullNameInput.value.trim();
+  const full_name = fullNameInput.value.trim();
   const email = emailInput.value.trim();
   const password = passwordInput.value.trim();
 
   // Client-side validation
-  if (!fullName) {
+  if (!full_name) {
     showToast('Please enter your full name.', 'error');
     fullNameInput.focus();
     return;
@@ -68,7 +68,7 @@ async function handleRegister(event) {
     const res = await fetch('/api/auth/register', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ full_name: fullName, email, password })
+      body: JSON.stringify({ full_name, email, password })
     });
 
     const data = await res.json();
