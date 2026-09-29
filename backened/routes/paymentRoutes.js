@@ -1,8 +1,8 @@
-// authRoutes.js
-
-// paymentRoutes.js
 const express = require('express');
-const { initiateCheckout } = require('../controllers/paymentController');
+const { initiateMpesaStkPush, initiatePayoneerPayment } = require('../controllers/paymentController');
 const router = express.Router();
-router.post('/checkout', initiateCheckout);
+
+router.post('/mpesa-stk', initiateMpesaStkPush);
+router.post('/payoneer', initiatePayoneerPayment);
+
 module.exports = router;
