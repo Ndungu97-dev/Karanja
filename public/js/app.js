@@ -211,6 +211,32 @@ function updateCartUI() {
   }
 }
 
+async function checkoutCart() {
+  const cart = getCart();
+  if (cart.length === 0) {
+    showToast('Your cart is empty.', 'error');
+    return;
+  }
+
+  const total = cart.reduce((sum, item) => sum + ((item.numericPrice || 0) * (item.quantity || 1)), 0);
+
+  const res = await fetch('/api/payment/checkout', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ amount: total, cartItems: cart })
+  });
+  const data = await res.json();
+
+  if (data.success && data.redirectUrl) {
+    showToast('Redirecting to secure payment gateway...');
+    setTimeout(() => {
+      window.location.href = data.redirectUrl;
+    }, 1200);
+  } else {
+    showToast('Checkout failed. Try again.', 'error');
+  }
+}
+
 function checkoutCart() {
   const cart = getCart();
   if (cart.length === 0) {
