@@ -82,6 +82,15 @@
         </div>
       `).join('');
     });
+    document.addEventListener("DOMContentLoaded", () => {
+  const urlParams = new URLSearchParams(window.location.search);
+  if (urlParams.get('payment') === 'success') {
+    showToast('Payment successful! Your academy order has been processed.', 'success');
+    clearCart();
+    window.history.replaceState({}, document.title, window.location.pathname);
+  }
+});
+
   </script>
 </body>
 </html>
