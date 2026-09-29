@@ -9,6 +9,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
   if (loginStepOneForm) {
     loginStepOneForm.addEventListener('submit', handleLoginStepOne);
+  } else {
+    // Fallback if form ID doesn't match: listen globally for login button clicks
+    console.warn('password-login-form ID not found on this page.');
   }
 
   if (otpForm) {
@@ -57,8 +60,22 @@ let pendingLoginEmail = '';
 
 async function handleLoginStepOne(event) {
   event.preventDefault();
-  const email = document.getElementById('login-email').value.trim();
-  const password = document.getElementById('login-password').value;
+  
+  const emailInput = document.getElementById('login-email');
+  const passwordInput = document.getElementById('login-password');
+
+  if (!emailInput || !passwordInput) {
+    showToast('Could not find login input fields.', 'error');
+    return;
+  }
+
+  const email = emailInput.value.trim();
+  const password = passwordInput.value;
+
+  if (!email || !password) {
+    showToast('Please enter both email and password.', 'error');
+    return;
+  }
 
   pendingLoginEmail = email;
   showToast('Verifying credentials & sending OTP email...');
@@ -73,13 +90,18 @@ async function handleLoginStepOne(event) {
 
     if (data.success) {
       showToast(data.message || 'OTP sent to your email!', 'success');
+      
       // Switch view from password form to OTP verification form
-      document.getElementById('password-login-form').classList.add('hidden');
-      document.getElementById('otp-verify-form').classList.remove('hidden');
+      const passwordForm = document.getElementById('password-login-form');
+      const otpForm = document.getElementById('otp-verify-form');
+      
+      if (passwordForm) passwordForm.classList.add('hidden');
+      if (otpForm) otpForm.classList.remove('hidden');
     } else {
       showToast(data.message || 'Invalid login credentials.', 'error');
     }
   } catch (err) {
+    console.error('Login error:', err);
     showToast('Network error during login.', 'error');
   }
 }
@@ -87,7 +109,10 @@ async function handleLoginStepOne(event) {
 // --- 3. LOGIN STEP 2 (Verify OTP & Enter Dashboard) ---
 async function handleVerifyOtp(event) {
   event.preventDefault();
-  const otp = document.getElementById('login-otp').value.trim();
+  const otpInput = document.getElementById('login-otp');
+  
+  if (!otpInput) return;
+  const otp = otpInput.value.trim();
 
   if (!otp || otp.length !== 6) {
     showToast('Please enter a valid 6-digit OTP code.', 'error');
