@@ -1,3 +1,30 @@
+document.addEventListener("DOMContentLoaded", () => {
+  const registerForm = document.getElementById('register-form');
+  const loginStepOneForm = document.getElementById('password-login-form');
+  const otpForm = document.getElementById('otp-verify-form');
+
+  if (registerForm) {
+    registerForm.addEventListener('submit', handleRegister);
+  }
+
+  if (loginStepOneForm) {
+    loginStepOneForm.addEventListener('submit', handleLoginStepOne);
+  }
+
+  if (otpForm) {
+    otpForm.addEventListener('submit', handleVerifyOtp);
+  }
+
+  // Check URL params for session notices
+  const urlParams = new URLSearchParams(window.location.search);
+  if (urlParams.get('expired') === 'true') {
+    showToast('Your session has expired. Please log in again.', 'error');
+  }
+  if (urlParams.get('logout') === 'true') {
+    showToast('You have been logged out securely.', 'success');
+  }
+});
+
 // --- 1. REGISTRATION HANDLER ---
 async function handleRegister(event) {
   event.preventDefault();
@@ -5,7 +32,7 @@ async function handleRegister(event) {
   const email = document.getElementById('reg-email').value.trim();
   const password = document.getElementById('reg-password').value;
 
-  showToast('Creating your account...');
+  showToast('Creating account and sending welcome email...');
   try {
     const res = await fetch('/api/auth/register', {
       method: 'POST',
@@ -15,7 +42,7 @@ async function handleRegister(event) {
     const data = await res.json();
 
     if (data.success) {
-      showToast(data.message || 'Registration successful! Check your email to verify.', 'success');
+      showToast(data.message || 'Registration successful! Check your email.', 'success');
       setTimeout(() => { window.location.href = 'login.html'; }, 2000);
     } else {
       showToast(data.message || 'Registration failed.', 'error');
@@ -25,7 +52,7 @@ async function handleRegister(event) {
   }
 }
 
-// --- 2. LOGIN STEP 1 (Password Submission & OTP Trigger) ---
+// --- 2. LOGIN STEP 1 (Password & Trigger OTP Email) ---
 let pendingLoginEmail = '';
 
 async function handleLoginStepOne(event) {
@@ -34,7 +61,7 @@ async function handleLoginStepOne(event) {
   const password = document.getElementById('login-password').value;
 
   pendingLoginEmail = email;
-  showToast('Verifying credentials...');
+  showToast('Verifying credentials & sending OTP email...');
 
   try {
     const res = await fetch('/api/auth/login', {
@@ -45,8 +72,8 @@ async function handleLoginStepOne(event) {
     const data = await res.json();
 
     if (data.success) {
-      showToast(data.message || 'Password verified. OTP sent to your email!', 'success');
-      // Switch UI from Password form to OTP form
+      showToast(data.message || 'OTP sent to your email!', 'success');
+      // Switch view from password form to OTP verification form
       document.getElementById('password-login-form').classList.add('hidden');
       document.getElementById('otp-verify-form').classList.remove('hidden');
     } else {
@@ -86,16 +113,3 @@ async function handleVerifyOtp(event) {
     showToast('Network error during OTP validation.', 'error');
   }
 }
-
-// --- 4. CHECK URL PARAMS FOR EXPIRED SESSIONS / LOGOUT ---
-document.addEventListener("DOMContentLoaded", () => {
-  const urlParams = new URLSearchParams(window.location.search);
-  if (urlParams.get('expired') === 'true') {
-    showToast('Your session has expired. Please log in again.', 'error');
-    window.history.replaceState({}, document.title, window.location.pathname);
-  }
-  if (urlParams.get('logout') === 'true') {
-    showToast('You have been logged out securely.', 'success');
-    window.history.replaceState({}, document.title, window.location.pathname);
-  }
-});
