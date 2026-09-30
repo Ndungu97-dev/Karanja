@@ -8,36 +8,30 @@ const sql = require("./backend/config/db");
 
 const app = express();
 
+// CRITICAL FOR RENDER / HTTPS: Tells Express to trust proxy headers so session cookies persist
+app.set("trust proxy", 1);
+
 // Middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// <-- THIS IS WHAT SERVES YOUR HTML FILES -->
-app.use(express.static(path.join(__dirname, "public"))); 
-// (Change "public" to wherever your HTML files are saved)
+// Serve static frontend files from 'public' folder
+app.use(express.static(path.join(__dirname, "public")));
 
-// Session configuration with 1-hour inactivity timeout
+// Session configuration
 app.use(
   session({
     secret: process.env.SESSION_SECRET || "karanja_academy_secret_key",
     resave: false,
     saveUninitialized: false,
-    cookie: { 
-      secure: process.env.NODE_ENV === "production",
+    cookie: {
+      secure: process.env.NODE_ENV === "production", // True in production on Render (HTTPS)
       httpOnly: true,
-      maxAge: 60 * 60 * 1000 // 1 hour in milliseconds
+      sameSite: "lax",
+      maxAge: 1000 * 60 * 60 * 24 // 24 hours
     }
   })
 );
-
-// Session activity middleware - reset session timeout on each request
-app.use((req, res, next) => {
-  if (req.session.user) {
-    // Reset the session cookie expiration on each authenticated request
-    req.session.touch();
-  }
-  next();
-});
 
 // Database Health-Check Route
 app.get("/api/health", async (req, res) => {
@@ -52,6 +46,11 @@ app.get("/api/health", async (req, res) => {
 
 // API Routes
 app.use("/api/auth", authRoutes);
+
+// Fallback to index.html for frontend routing
+app.get("*", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "index.html"));
+});
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
