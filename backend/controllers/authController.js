@@ -41,7 +41,7 @@ exports.register = async (req, res) => {
   }
 };
 
-// 2. LOGIN STEP 1: VALIDATE PASSWORD & SEND REAL EMAIL OTP
+// 2. LOGIN STEP 1: VALIDATE PASSWORD & NON-BLOCKING OTP DISPATCH
 exports.loginStep1 = async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -73,13 +73,17 @@ exports.loginStep1 = async (req, res) => {
       WHERE id = ${user.id}
     `;
 
-    // 🚀 Dispatch real email using Render environment variables
-    await sendOtpEmail(email, otp);
-
+    // 🚀 RESPOND IMMEDIATELY (Zero downtime, zero UI freezing)
     res.status(200).json({ message: "OTP sent successfully to your email." });
+
+    // 🔄 Dispatch email in the background asynchronously
+    sendOtpEmail(email, otp).catch(emailErr => {
+      console.error("Background email dispatch failed:", emailErr);
+    });
+
   } catch (err) {
-    console.error("Login Step 1 email dispatch error:", err);
-    res.status(500).json({ error: "Failed to send OTP email. Please check your server environment variables." });
+    console.error("Login Step 1 error:", err);
+    res.status(500).json({ error: "Internal server error during authentication" });
   }
 };
 
@@ -111,7 +115,7 @@ exports.verifyOtp = async (req, res) => {
       return res.status(400).json({ error: "OTP code has expired. Please log in again." });
     }
 
-    // Clear OTP so it can't be reused
+    // Clear OTP so it cannot be reused
     await sql`
       UPDATE users 
       SET otp_code = NULL, otp_expires_at = NULL 
