@@ -66,15 +66,6 @@ app.get("/api/health", async (req, res) => {
 app.use("/api/auth", authRoutes);
 app.use("/api/shop", shopRoutes);
 
-// --- LEGAL PAGES ROUTES ---
-app.get("/privacy-policy", (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "privacy.html"));
-});
-
-app.get("/cookie-policy", (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "cookies.html"));
-});
-
 // Protect dashboard page
 app.get("/dashboard.html", (req, res, next) => {
   if (!req.session || !req.session.user) {
