@@ -1,5 +1,6 @@
 const bcrypt = require("bcryptjs");
 const sql = require("../config/db");
+const { sendOtpEmail } = require("../utils/emailUtils");
 
 // 1. REGISTER USER
 exports.register = async (req, res) => {
@@ -10,18 +11,15 @@ exports.register = async (req, res) => {
       return res.status(400).json({ error: "All fields are required" });
     }
 
-    // Check if email already exists
     const existingUser = await sql`SELECT id FROM users WHERE email = ${email}`;
     if (existingUser.length > 0) {
       return res.status(400).json({ error: "Email is already registered" });
     }
 
-    // Hash password securely with bcrypt
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
     const userRole = role === "admin" ? "admin" : "student";
 
-    // Insert user into PostgreSQL
     const [newUser] = await sql`
       INSERT INTO users (full_name, email, password, role)
       VALUES (${full_name}, ${email}, ${hashedPassword}, ${userRole})
@@ -43,7 +41,7 @@ exports.register = async (req, res) => {
   }
 };
 
-// 2. LOGIN STEP 1: VALIDATE PASSWORD & GENERATE 6-DIGIT OTP
+// 2. LOGIN STEP 1: VALIDATE PASSWORD & SEND REAL EMAIL OTP
 exports.loginStep1 = async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -52,7 +50,6 @@ exports.loginStep1 = async (req, res) => {
       return res.status(400).json({ error: "Email and password are required" });
     }
 
-    // Fetch user from database
     const users = await sql`SELECT id, full_name, email, password, role FROM users WHERE email = ${email}`;
     if (users.length === 0) {
       return res.status(401).json({ error: "Invalid email or password" });
@@ -60,13 +57,12 @@ exports.loginStep1 = async (req, res) => {
 
     const user = users[0];
 
-    // Compare password with bcrypt hash
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
       return res.status(401).json({ error: "Invalid email or password" });
     }
 
-    // Generate random 6-digit OTP code & 10-minute expiration timestamp
+    // Generate random 6-digit OTP code & 10-minute expiration
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
     const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
 
@@ -77,13 +73,13 @@ exports.loginStep1 = async (req, res) => {
       WHERE id = ${user.id}
     `;
 
-    // (Optional: integrate your email transporter here. For dev, it logs to terminal)
-    console.log(`[SECURE OTP] Generated code for ${email}: ${otp}`);
+    // 🚀 Dispatch real email using Render environment variables
+    await sendOtpEmail(email, otp);
 
-    res.status(200).json({ message: "OTP generated and sent successfully." });
+    res.status(200).json({ message: "OTP sent successfully to your email." });
   } catch (err) {
-    console.error("Login Step 1 error:", err);
-    res.status(500).json({ error: "Internal server error during authentication" });
+    console.error("Login Step 1 email dispatch error:", err);
+    res.status(500).json({ error: "Failed to send OTP email. Please check your server environment variables." });
   }
 };
 
@@ -107,17 +103,15 @@ exports.verifyOtp = async (req, res) => {
 
     const user = users[0];
 
-    // Validate OTP match
     if (!user.otp_code || user.otp_code !== otp.trim()) {
       return res.status(400).json({ error: "Invalid OTP code" });
     }
 
-    // Validate expiration
     if (new Date() > new Date(user.otp_expires_at)) {
       return res.status(400).json({ error: "OTP code has expired. Please log in again." });
     }
 
-    // Clear OTP so it cannot be reused
+    // Clear OTP so it can't be reused
     await sql`
       UPDATE users 
       SET otp_code = NULL, otp_expires_at = NULL 
@@ -166,7 +160,7 @@ exports.getDashboardData = async (req, res) => {
     `;
 
     if (!user) {
-      return req.session.destroy(() => {
+      return res.session.destroy(() => {
         res.status(401).json({ error: "User session invalid or expired." });
       });
     }
