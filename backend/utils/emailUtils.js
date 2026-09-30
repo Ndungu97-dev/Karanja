@@ -1,34 +1,37 @@
 const nodemailer = require("nodemailer");
 
-// Resolve environment variables securely
-const smtpUser = process.env.SMTP_USER || process.env.EMAIL_USER;
-const smtpPass = process.env.SMTP_PASS || process.env.EMAIL_PASS;
-const smtpHost = process.env.SMTP_HOST || process.env.EMAIL_HOST || "smtp.gmail.com";
-const smtpPort = Number(process.env.SMTP_PORT || process.env.EMAIL_PORT || 587);
-
+// Strictly use environment variables set on Render
 const transporter = nodemailer.createTransport({
-  host: smtpHost,
-  port: smtpPort,
-  secure: smtpPort === 465, // true for 465, false for 587
+  host: process.env.SMTP_HOST,
+  port: Number(process.env.SMTP_PORT),
+  secure: Number(process.env.SMTP_PORT) === 587,
   auth: {
-    user: smtpUser,
-    pass: smtpPass,
+    user: process.env.SMTP_USER,
+    pass: process.env.SMTP_PASS,
   },
+  tls: {
+    rejectUnauthorized: false
+  }
 });
 
-// Verify connection on startup to log any credential misconfigurations immediately
+// Verify connection on startup
 transporter.verify((error, success) => {
   if (error) {
-    console.error("❌ SMTP Connection Error:", error);
+    console.error("❌ SMTP Connection Verification Failed:", error);
   } else {
-    console.log("✅ SMTP Server connected successfully using user:", smtpUser);
+    console.log("✅ SMTP Server connected successfully!");
   }
 });
 
 exports.sendOtpEmail = async (toEmail, otp) => {
+  if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
+    console.error("❌ CRITICAL: SMTP environment variables are not defined!");
+    throw new Error("Missing SMTP credentials");
+  }
+
   const mailOptions = {
-    // Ensures sender is 100% identical to the authenticated SMTP user
-    from: `"Karanja Cyber Academy" <${smtpUser}>`,
+    // Uses strictly the SMTP_USER environment variable as the sender address
+    from: process.env.SMTP_USER,
     to: toEmail,
     subject: "Your Login Verification Code",
     html: `
@@ -45,10 +48,10 @@ exports.sendOtpEmail = async (toEmail, otp) => {
 
   try {
     const info = await transporter.sendMail(mailOptions);
-    console.log("📧 OTP Email successfully dispatched to:", toEmail, info.response);
+    console.log("📧 OTP Email successfully sent to:", toEmail, info.response);
     return info;
   } catch (err) {
-    console.error("❌ Error sending OTP email:", err);
+    console.error("❌ Error during transporter.sendMail:", err);
     throw err;
   }
 };
