@@ -1,175 +1,168 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="dark">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Login - Karanja Cyber Solutions & Academy</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #0f172a;
-      color: #f8fafc;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-      margin: 0;
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: { darkbg: '#090d16', cardbg: '#111827', bordercol: '#1f2937' }
+        }
+      }
     }
-    .auth-container {
-      background: #1e293b;
-      padding: 40px;
-      border-radius: 10px;
-      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
-      width: 100%;
-      max-width: 400px;
-      border: 1px solid #334155;
-    }
-    h2 {
-      margin-bottom: 24px;
-      color: #38bdf8;
-      text-align: center;
-    }
-    .form-group {
-      margin-bottom: 20px;
-    }
-    label {
-      display: block;
-      margin-bottom: 8px;
-      font-size: 14px;
-      color: #cbd5e1;
-    }
-    input {
-      width: 100%;
-      padding: 12px;
-      background: #0f172a;
-      border: 1px solid #475569;
-      color: white;
-      border-radius: 6px;
-      box-sizing: border-box;
-      font-size: 14px;
-    }
-    input:focus {
-      outline: none;
-      border-color: #38bdf8;
-    }
-    .btn {
-      width: 100%;
-      padding: 12px;
-      background: #3b82f6;
-      color: white;
-      border: none;
-      border-radius: 6px;
-      font-size: 16px;
-      font-weight: bold;
-      cursor: pointer;
-      transition: background 0.2s;
-    }
-    .btn:hover {
-      background: #2563eb;
-    }
-    .btn:disabled {
-      background: #64748b;
-      cursor: not-allowed;
-    }
-    .error-msg {
-      background: rgba(239, 68, 68, 0.2);
-      border: 1px solid #ef4444;
-      color: #fca5a5;
-      padding: 10px;
-      border-radius: 6px;
-      margin-bottom: 20px;
-      font-size: 14px;
-      display: none;
-    }
-    .footer-text {
-      text-align: center;
-      margin-top: 20px;
-      font-size: 14px;
-      color: #94a3b8;
-    }
-    .footer-text a {
-      color: #38bdf8;
-      text-decoration: none;
-    }
-    .footer-text a:hover {
-      text-decoration: underline;
-    }
-  </style>
+  </script>
 </head>
-<body>
+<body class="bg-darkbg text-slate-100 min-h-screen flex items-center justify-center p-4 font-sans antialiased selection:bg-cyan-500 selection:text-black">
 
-  <div class="auth-container">
-    <h2>Karanja Cyber Academy</h2>
+  <!-- TOAST CONTAINER -->
+  <div id="toastContainer" class="fixed top-5 right-5 z-50 flex flex-col space-y-3 pointer-events-none"></div>
+
+  <div class="bg-cardbg border border-bordercol rounded-2xl w-full max-w-md p-8 shadow-2xl relative">
     
-    <!-- Error Notification Box -->
-    <div id="errorAlert" class="error-msg"></div>
+    <!-- BRAND HEADER -->
+    <div class="text-center mb-8">
+      <div class="inline-block bg-cyan-500 text-slate-950 font-black px-3.5 py-1.5 rounded-xl text-xl tracking-wider mb-3">KCS</div>
+      <h1 class="text-2xl font-black text-white tracking-tight">Welcome Back</h1>
+      <p class="text-xs text-slate-400 mt-1">Secure Student & Administrator Portal</p>
+    </div>
 
-    <form id="loginForm">
-      <div class="form-group">
-        <label for="email">Email Address</label>
-        <input type="email" id="email" name="email" placeholder="student@karanjacaps.com" required />
+    <!-- STEP 1: LOGIN FORM (Email & Password) -->
+    <form id="loginForm" onsubmit="handleLoginCredentials(event)" class="space-y-5">
+      <div>
+        <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">Email Address</label>
+        <input type="email" id="email" name="email" required placeholder="student@karanjacaps.com" 
+          class="w-full bg-darkbg border border-slate-700 text-white rounded-xl px-4 py-3 focus:outline-none focus:border-cyan-500 text-sm font-medium transition" />
       </div>
 
-      <div class="form-group">
-        <label for="password">Password</label>
-        <input type="password" id="password" name="password" placeholder="••••••••" required />
+      <div>
+        <div class="flex justify-between items-center mb-2">
+          <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider">Password</label>
+          <a href="/forgot-password.html" class="text-xs text-cyan-400 hover:text-cyan-300 font-medium transition">Forgot password?</a>
+        </div>
+        <input type="password" id="password" name="password" required placeholder="••••••••" 
+          class="w-full bg-darkbg border border-slate-700 text-white rounded-xl px-4 py-3 focus:outline-none focus:border-cyan-500 text-sm font-medium transition" />
       </div>
 
-      <button type="submit" id="loginBtn" class="btn">Sign In</button>
+      <button type="submit" id="loginBtn" class="w-full bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold py-3.5 rounded-xl transition shadow-lg shadow-cyan-500/20">
+        Continue to Verification
+      </button>
     </form>
 
-    <div class="footer-text">
-      Don't have an account? <a href="/register.html">Register here</a>
+    <!-- STEP 2: OTP VERIFICATION FORM (Hidden Initially) -->
+    <form id="otpForm" onsubmit="handleVerifyOtp(event)" class="space-y-5 hidden">
+      <div class="bg-cyan-500/10 border border-cyan-500/20 rounded-xl p-4 text-center">
+        <p class="text-xs text-cyan-300 font-medium">An authentication OTP code has been sent to your registered email address.</p>
+      </div>
+
+      <div>
+        <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">Enter 6-Digit OTP Code</label>
+        <input type="text" id="otpCode" name="otp" maxlength="6" required placeholder="123456" 
+          class="w-full bg-darkbg border border-slate-700 text-white text-center tracking-widest text-xl font-black rounded-xl px-4 py-3 focus:outline-none focus:border-cyan-500 transition" />
+      </div>
+
+      <button type="submit" id="otpBtn" class="w-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold py-3.5 rounded-xl transition shadow-lg shadow-emerald-500/20">
+        Verify & Access Dashboard
+      </button>
+    </form>
+
+    <div class="text-center mt-6 pt-6 border-t border-slate-800">
+      <p class="text-xs text-slate-400">Don't have an account? <a href="/register.html" class="text-cyan-400 hover:underline font-semibold">Register here</a></p>
     </div>
+
   </div>
 
   <script>
-    document.getElementById("loginForm").addEventListener("submit", async (e) => {
-      e.preventDefault();
+    let userEmailCache = "";
 
-      const loginBtn = document.getElementById("loginBtn");
-      const errorAlert = document.getElementById("errorAlert");
+    function showToast(message, type = 'success') {
+      const container = document.getElementById('toastContainer');
+      const toast = document.createElement('div');
+      const bgColors = type === 'success' ? 'bg-emerald-500 text-slate-950 border-emerald-400' : 'bg-rose-500 text-white border-rose-400';
       
-      // Clear previous errors & lock button to prevent multiple clicks
-      errorAlert.style.display = "none";
-      errorAlert.innerText = "";
-      loginBtn.innerText = "Signing in...";
-      loginBtn.disabled = true;
+      toast.className = `pointer-events-auto px-4 py-3 rounded-xl border font-bold text-sm shadow-xl flex items-center space-x-2 transition-all transform translate-y-2 opacity-0 ${bgColors}`;
+      toast.innerHTML = `<span>${type === 'success' ? '✔' : '⚠️'}</span><span>${message}</span>`;
+      
+      container.appendChild(toast);
+      setTimeout(() => { toast.classList.remove('translate-y-2', 'opacity-0'); }, 50);
+      setTimeout(() => {
+        toast.classList.add('translate-y-2', 'opacity-0');
+        setTimeout(() => toast.remove(), 300);
+      }, 3500);
+    }
 
-      const formData = new FormData(e.target);
-      const data = Object.fromEntries(formData.entries());
+    // Step 1: Submit Credentials & Request OTP
+    async function handleLoginCredentials(e) {
+      e.preventDefault();
+      const btn = document.getElementById("loginBtn");
+      btn.innerText = "Authenticating...";
+      btn.disabled = true;
+
+      const email = document.getElementById("email").value;
+      const password = document.getElementById("password").value;
+      userEmailCache = email;
 
       try {
-        const response = await fetch("/api/auth/login", {
+        const res = await fetch("/api/auth/login-step1", {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify(data)
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, password })
         });
+        const result = await res.json();
 
-        const result = await response.json();
-
-        if (response.ok) {
-          // Success! Immediately route the browser to the dashboard URL provided by the backend
-          console.log("Login successful, redirecting to:", result.redirectUrl);
-          window.location.href = result.redirectUrl || "/dashboard.html";
+        if (res.ok) {
+          showToast("Credentials verified! OTP code sent.");
+          // Switch to Step 2 OTP Form smoothly
+          document.getElementById("loginForm").classList.add("hidden");
+          document.getElementById("otpForm").classList.remove("hidden");
         } else {
-          // Show error message inside the form alert box
-          errorAlert.innerText = result.error || "Invalid email or password.";
-          errorAlert.style.display = "block";
-          loginBtn.innerText = "Sign In";
-          loginBtn.disabled = false;
+          showToast(result.error || "Invalid login credentials", "error");
+          btn.innerText = "Continue to Verification";
+          btn.disabled = false;
         }
       } catch (err) {
-        console.error("Network or server error during login:", err);
-        errorAlert.innerText = "Connection failed. Please check your network.";
-        errorAlert.style.display = "block";
-        loginBtn.innerText = "Sign In";
-        loginBtn.disabled = false;
+        showToast("Network connection error", "error");
+        btn.innerText = "Continue to Verification";
+        btn.disabled = false;
       }
-    });
-  </script>
+    }
 
+    // Step 2: Verify OTP Code
+    async function handleVerifyOtp(e) {
+      e.preventDefault();
+      const btn = document.getElementById("otpBtn");
+      btn.innerText = "Verifying Code...";
+      btn.disabled = true;
+
+      const otp = document.getElementById("otpCode").value;
+
+      try {
+        const res = await fetch("/api/auth/verify-otp", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email: userEmailCache, otp })
+        });
+        const result = await res.json();
+
+        if (res.ok) {
+          showToast("Login successful! Redirecting...");
+          setTimeout(() => {
+            window.location.href = result.redirectUrl || "/dashboard.html";
+          }, 1000);
+        } else {
+          showToast(result.error || "Invalid or expired OTP code", "error");
+          btn.innerText = "Verify & Access Dashboard";
+          btn.disabled = false;
+        }
+      } catch (err) {
+        showToast("Verification network error", "error");
+        btn.innerText = "Verify & Access Dashboard";
+        btn.disabled = false;
+      }
+    }
+  </script>
 </body>
 </html>
