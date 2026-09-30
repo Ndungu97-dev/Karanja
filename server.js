@@ -4,11 +4,12 @@ const session = require("express-session");
 const path = require("path");
 
 const authRoutes = require("./backend/routes/authRoutes");
+const shopRoutes = require("./backend/routes/shopRoutes");
 const sql = require("./backend/config/db");
 
 const app = express();
 
-// CRITICAL FOR RENDER / HTTPS: Tells Express to trust proxy headers so session cookies persist
+// CRITICAL FOR RENDER / HTTPS: Trust proxy so session cookies don't drop
 app.set("trust proxy", 1);
 
 // Middleware
@@ -18,17 +19,17 @@ app.use(express.urlencoded({ extended: true }));
 // Serve static frontend files from 'public' folder
 app.use(express.static(path.join(__dirname, "public")));
 
-// Session configuration
+// Session configuration (Fixed timeout / persistence)
 app.use(
   session({
-    secret: process.env.SESSION_SECRET || "karanja_academy_secret_key",
+    secret: process.env.SESSION_SECRET || "karanja_academy_secure_secret",
     resave: false,
     saveUninitialized: false,
     cookie: {
-      secure: process.env.NODE_ENV === "production", // True in production on Render (HTTPS)
+      secure: process.env.NODE_ENV === "production", // true on Render (HTTPS)
       httpOnly: true,
       sameSite: "lax",
-      maxAge: 1000 * 60 * 60 * 24 // 24 hours
+      maxAge: 1000 * 60 * 60 * 24 // 24 hours session lifetime
     }
   })
 );
@@ -46,8 +47,17 @@ app.get("/api/health", async (req, res) => {
 
 // API Routes
 app.use("/api/auth", authRoutes);
+app.use("/api/shop", shopRoutes);
 
-// Fallback to index.html for frontend routing
+// Protected Page Route Middleware (Ensures users can't bypass login to view dashboard.html directly)
+app.get("/dashboard.html", (req, res, next) => {
+  if (!req.session || !req.session.user) {
+    return res.redirect("/login.html");
+  }
+  next();
+});
+
+// Fallback to index.html
 app.get("*", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "index.html"));
 });
