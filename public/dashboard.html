@@ -3,79 +3,193 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Student Dashboard - Karanja Cyber Solutions & Academy</title>
-  <!-- Tailwind CSS CDN -->
-  <script src="https://cdn.tailwindcss.com"></script>
-  <!-- FontAwesome Icons -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <title>Karanja Cyber Academy - Secure Dashboard</title>
+  <style>
+    body { font-family: Arial, sans-serif; background: #0f172a; color: #f8fafc; margin: 0; padding: 20px; }
+    .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #334155; padding-bottom: 15px; }
+    .btn { background: #3b82f6; color: white; border: none; padding: 10px 16px; cursor: pointer; border-radius: 6px; }
+    .btn:hover { background: #2563eb; }
+    .btn-danger { background: #ef4444; }
+    .courses-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; margin-top: 30px; }
+    .course-card { background: #1e293b; border: 1px solid #334155; border-radius: 8px; padding: 20px; display: flex; flex-direction: column; justify-content: space-between; }
+    /* Modal Styles */
+    .modal { display: none; position: fixed; z-index: 100; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); }
+    .modal-content { background: #1e293b; margin: 10% auto; padding: 30px; width: 90%; max-width: 500px; border-radius: 8px; position: relative; border: 1px solid #475569; }
+    .close { position: absolute; right: 20px; top: 15px; font-size: 28px; cursor: pointer; color: #94a3b8; }
+    .cart-item { display: flex; justify-content: space-between; margin-bottom: 10px; border-bottom: 1px solid #334155; padding-bottom: 8px; }
+    select { width: 100%; padding: 10px; margin: 15px 0; background: #0f172a; color: white; border: 1px solid #475569; border-radius: 6px; }
+  </style>
 </head>
-<body class="bg-slate-950 text-slate-100 font-mono min-h-screen flex flex-col justify-between">
+<body>
 
-  <!-- Navigation Injection Placeholder -->
-  <div id="nav-placeholder"></div>
-
-  <!-- Main Dashboard Content -->
-  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 w-full flex-grow space-y-8">
-    
-    <!-- Welcome Header Banner -->
-    <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 md:p-8 flex flex-col md:flex-row items-start md:items-center justify-between gap-6 shadow-2xl">
-      <div class="space-y-2">
-        <div class="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 text-xs">
-          <i class="fa-solid fa-shield-halved"></i>
-          <span id="user-role">STUDENT</span>
-        </div>
-        <h1 class="text-2xl md:text-3xl font-bold text-white tracking-tight">Welcome back, <span id="user-fullname" class="text-cyan-400">Loading...</span></h1>
-        <p class="text-slate-400 text-xs" id="user-email">fetching session...</p>
-      </div>
-      <button onclick="handleLogout()" class="px-5 py-2.5 rounded-xl bg-red-500/10 border border-red-500/30 hover:bg-red-500/20 text-red-400 text-xs font-bold transition flex items-center space-x-2">
-        <i class="fa-solid fa-right-from-bracket"></i>
-        <span>Secure Logout</span>
-      </button>
+  <div class="header">
+    <div>
+      <h2 id="welcomeText">Loading Dashboard...</h2>
+      <p id="userEmail" style="color: #94a3b8;"></p>
     </div>
-
-    <!-- Dashboard Quick Grid -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-      
-      <!-- Enrolled Courses Card -->
-      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-4 shadow-xl">
-        <div class="flex items-center justify-between text-slate-400">
-          <span class="text-xs font-bold">ACTIVE COURSES</span>
-          <i class="fa-solid fa-graduation-cap text-cyan-400"></i>
-        </div>
-        <div class="text-2xl font-bold text-white">0</div>
-        <p class="text-[11px] text-slate-500">Explore cloud infrastructure and cybersecurity modules in the shop.</p>
-        <a href="shop.html" class="inline-block text-xs text-cyan-400 hover:underline font-bold">Browse Catalog &rarr;</a>
-      </div>
-
-      <!-- Lab Status Card -->
-      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-4 shadow-xl">
-        <div class="flex items-center justify-between text-slate-400">
-          <span class="text-xs font-bold">SIMULATION LABS</span>
-          <i class="fa-solid fa-server text-cyan-400"></i>
-        </div>
-        <div class="text-2xl font-bold text-emerald-400">ONLINE</div>
-        <p class="text-[11px] text-slate-500">Wazuh SIEM and Cloud Infrastructure labs ready for deployment.</p>
-      </div>
-
-      <!-- Account Status Card -->
-      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-4 shadow-xl">
-        <div class="flex items-center justify-between text-slate-400">
-          <span class="text-xs font-bold">SECURITY STATUS</span>
-          <i class="fa-solid fa-lock text-cyan-400"></i>
-        </div>
-        <div class="text-2xl font-bold text-cyan-400">Protected</div>
-        <p class="text-[11px] text-slate-500">Session secured with encrypted cookies and OTP verification.</p>
-      </div>
-
+    <div>
+      <button onclick="openCartModal()" class="btn" style="margin-right: 10px;">🛒 Cart (<span id="cartCount">0</span>)</button>
+      <button onclick="logoutUser()" class="btn btn-danger">Logout</button>
     </div>
+  </div>
 
-  </main>
+  <h3>Available Academy Courses</h3>
+  <div id="coursesContainer" class="courses-grid">Loading courses...</div>
 
-  <!-- Footer Injection Placeholder -->
-  <div id="footer-placeholder"></div>
+  <!-- CART MODAL -->
+  <div id="cartModal" class="modal">
+    <div class="modal-content">
+      <span class="close" onclick="closeCartModal()">&times;</span>
+      <h3>Your Shopping Cart</h3>
+      <div id="cartItemsList">Loading cart...</div>
+      <h3>Total: $<span id="cartTotal">0.00</span></h3>
+      <button onclick="openCheckoutModal()" class="btn" style="width: 100%; margin-top: 15px;">Proceed to Secure Checkout</button>
+    </div>
+  </div>
 
-  <!-- Core App Logic & Dashboard Session Protection Scripts -->
-  <script src="js/app.js"></script>
-  <script src="js/dashboard.js"></script>
+  <!-- CHECKOUT MODAL -->
+  <div id="checkoutModal" class="modal">
+    <div class="modal-content">
+      <span class="close" onclick="closeCheckoutModal()">&times;</span>
+      <h3>Complete Purchase</h3>
+      <form onsubmit="handleCheckout(event)">
+        <label>Payment Method:</label>
+        <select id="paymentMethod">
+          <option value="M-Pesa">M-Pesa (Instant STK Push)</option>
+          <option value="Card">Credit / Debit Card</option>
+        </select>
+        <button type="submit" class="btn" style="width: 100%; background: #10b981;">Pay & Enroll Now</button>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    async function initDashboard() {
+      try {
+        const res = await fetch("/api/auth/dashboard-data");
+        const data = await res.json();
+        if (res.ok) {
+          document.getElementById("welcomeText").innerText = `Welcome, ${data.user.full_name}`;
+          document.getElementById("userEmail").innerText = `Role: ${data.user.role.toUpperCase()} | Email: ${data.user.email}`;
+          loadCourses();
+          updateCartCount();
+        } else {
+          window.location.href = "/login.html";
+        }
+      } catch (err) {
+        console.error("Auth check error:", err);
+        window.location.href = "/login.html";
+      }
+    }
+
+    async function loadCourses() {
+      const res = await fetch("/api/shop/courses");
+      const courses = await res.json();
+      let html = "";
+      courses.forEach(course => {
+        html += `
+          <div class="course-card">
+            <div>
+              <h4>${course.title}</h4>
+              <p style="color: #94a3b8; font-size: 14px;">${course.description || ""}</p>
+            </div>
+            <div>
+              <p style="font-weight: bold; font-size: 18px; color: #38bdf8;">$${course.price}</p>
+              <button onclick="addToCart(${course.id})" class="btn" style="width: 100%;">Add to Cart</button>
+            </div>
+          </div>
+        `;
+      });
+      document.getElementById("coursesContainer").innerHTML = html;
+    }
+
+    async function addToCart(courseId) {
+      const res = await fetch("/api/shop/cart/add", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ course_id: courseId })
+      });
+      const result = await res.json();
+      if (res.ok) {
+        updateCartCount();
+        alert("Course added to cart!");
+      } else {
+        alert(result.error);
+      }
+    }
+
+    async function updateCartCount() {
+      const res = await fetch("/api/shop/cart");
+      if (res.ok) {
+        const cart = await res.json();
+        document.getElementById("cartCount").innerText = cart.length;
+      }
+    }
+
+    function openCartModal() {
+      document.getElementById("cartModal").style.display = "block";
+      loadCartItems();
+    }
+    function closeCartModal() { document.getElementById("cartModal").style.display = "none"; }
+
+    async function loadCartItems() {
+      const res = await fetch("/api/shop/cart");
+      const cart = await res.json();
+      let html = "";
+      let total = 0;
+      if (cart.length === 0) {
+        html = "<p>Your cart is empty.</p>";
+      } else {
+        cart.forEach(item => {
+          total += Number(item.price) * item.quantity;
+          html += `
+            <div class="cart-item">
+              <span>${item.title} ($${item.price})</span>
+              <button onclick="removeFromCart(${item.course_id})" style="background:#ef4444; color:white; border:none; padding:4px 8px; border-radius:4px; cursor:pointer;">Remove</button>
+            </div>
+          `;
+        });
+      }
+      document.getElementById("cartItemsList").innerHTML = html;
+      document.getElementById("cartTotal").innerText = total.toFixed(2);
+    }
+
+    async function removeFromCart(courseId) {
+      await fetch(`/api/shop/cart/remove/${courseId}`, { method: "DELETE" });
+      loadCartItems();
+      updateCartCount();
+    }
+
+    function openCheckoutModal() {
+      closeCartModal();
+      document.getElementById("checkoutModal").style.display = "block";
+    }
+    function closeCheckoutModal() { document.getElementById("checkoutModal").style.display = "none"; }
+
+    async function handleCheckout(e) {
+      e.preventDefault();
+      const payment_method = document.getElementById("paymentMethod").value;
+      const res = await fetch("/api/shop/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ payment_method })
+      });
+      const result = await res.json();
+      if (res.ok) {
+        alert("Payment successful! Enrolled in courses.");
+        closeCheckoutModal();
+        updateCartCount();
+      } else {
+        alert("Checkout failed: " + result.error);
+      }
+    }
+
+    async function logoutUser() {
+      await fetch("/api/auth/logout", { method: "POST" });
+      window.location.href = "/login.html";
+    }
+
+    window.onload = initDashboard;
+  </script>
 </body>
 </html>
