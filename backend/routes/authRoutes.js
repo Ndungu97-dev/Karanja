@@ -2,12 +2,19 @@ const express = require("express");
 const router = express.Router();
 const authController = require("../controllers/authController");
 
-// Check that these exact functions exist in authController.js:
+// Register a new user
 router.post("/register", authController.register);
-router.post("/login", authController.login);
-router.post("/logout", authController.logout);
-router.get("/dashboard-data", authController.getDashboardData);
+
+// Step 1: Validate email/password & trigger OTP
 router.post("/login-step1", authController.loginStep1);
+
+// Step 2: Verify OTP and log user in
 router.post("/verify-otp", authController.verifyOtp);
+
+// Logout user and destroy session
+router.post("/logout", authController.logout);
+
+// Fetch protected user profile/dashboard data
+router.get("/dashboard-data", authController.getDashboardData);
 
 module.exports = router;
