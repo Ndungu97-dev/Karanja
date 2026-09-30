@@ -1,138 +1,152 @@
 const bcrypt = require("bcryptjs");
 const sql = require("../config/db");
-const { sendOtpEmail } = require("../utils/emailUtils");
+const { sendOtpEmail, sendResetEmail } = require("../utils/emailUtils");
+const { generateCode, hashCode, codesMatch } = require("../utils/otpUtils");
 
-// 1. REGISTER USER
+const OTP_TTL = 10 * 60 * 1000;
+const RESET_TTL = 15 * 60 * 1000;
+const MAX_ATTEMPTS = 5;
+const normalizeEmail = (e) => String(e || "").trim().toLowerCase();
+const validPassword = (p) => typeof p === "string" && p.length >= 8;
+
+// 1. REGISTER
 exports.register = async (req, res) => {
   try {
-    const { full_name, email, password, role } = req.body;
+    const full_name = String(req.body.full_name || "").trim();
+    const email = normalizeEmail(req.body.email);
+    const { password } = req.body;
 
     if (!full_name || !email || !password) {
       return res.status(400).json({ error: "All fields are required" });
     }
+    if (!/^\S+@\S+\.\S+$/.test(email)) {
+      return res.status(400).json({ error: "Enter a valid email address" });
+    }
+    if (!validPassword(password)) {
+      return res.status(400).json({ error: "Password must be at least 8 characters" });
+    }
 
-    const existingUser = await sql`SELECT id FROM users WHERE email = ${email}`;
-    if (existingUser.length > 0) {
+    const existing = await sql`SELECT id FROM users WHERE email = ${email}`;
+    if (existing.length > 0) {
       return res.status(400).json({ error: "Email is already registered" });
     }
 
-    const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(password, salt);
-    const userRole = role === "admin" ? "admin" : "student";
+    const hashedPassword = await bcrypt.hash(password, 10);
 
+    // SECURITY: everyone registers as student. Promote admins manually in the DB.
     const [newUser] = await sql`
       INSERT INTO users (full_name, email, password, role)
-      VALUES (${full_name}, ${email}, ${hashedPassword}, ${userRole})
-      RETURNING id, full_name, email, role, created_at;
+      VALUES (${full_name}, ${email}, ${hashedPassword}, 'student')
+      RETURNING id, full_name, email, role;
     `;
 
-    res.status(201).json({
-      message: "Registration successful!",
-      user: {
-        id: newUser.id,
-        full_name: newUser.full_name,
-        email: newUser.email,
-        role: newUser.role
-      }
-    });
+    res.status(201).json({ message: "Registration successful!", user: newUser });
   } catch (err) {
     console.error("Registration error:", err);
     res.status(500).json({ error: "Internal server error during registration" });
   }
 };
 
-// 2. LOGIN STEP 1: VALIDATE PASSWORD & NON-BLOCKING OTP DISPATCH
+// 2. LOGIN STEP 1: check password, then send OTP
 exports.loginStep1 = async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const email = normalizeEmail(req.body.email);
+    const { password } = req.body;
 
     if (!email || !password) {
       return res.status(400).json({ error: "Email and password are required" });
     }
 
-    const users = await sql`SELECT id, full_name, email, password, role FROM users WHERE email = ${email}`;
+    const users = await sql`SELECT id, email, password FROM users WHERE email = ${email}`;
     if (users.length === 0) {
       return res.status(401).json({ error: "Invalid email or password" });
     }
 
     const user = users[0];
-
-    const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) {
+    if (!(await bcrypt.compare(password, user.password))) {
       return res.status(401).json({ error: "Invalid email or password" });
     }
 
-    // Generate random 6-digit OTP code & 10-minute expiration
-    const otp = Math.floor(100000 + Math.random() * 900000).toString();
-    const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
-
-    // Save OTP to database
+    const otp = generateCode();
     await sql`
-      UPDATE users 
-      SET otp_code = ${otp}, otp_expires_at = ${expiresAt} 
+      UPDATE users
+      SET otp_code = ${hashCode(otp)},
+          otp_expires_at = ${new Date(Date.now() + OTP_TTL)},
+          otp_attempts = 0
       WHERE id = ${user.id}
     `;
 
-    // 🚀 RESPOND IMMEDIATELY (Zero downtime, zero UI freezing)
+    // Wait for the email so we never claim success when it failed
+    try {
+      await sendOtpEmail(user.email, otp);
+    } catch (emailErr) {
+      console.error("OTP email failed:", emailErr.code, emailErr.message);
+      return res.status(500).json({
+        error: "We couldn't send the verification email. Please try again shortly.",
+      });
+    }
+
     res.status(200).json({ message: "OTP sent successfully to your email." });
-
-    // 🔄 Dispatch email in the background asynchronously
-    sendOtpEmail(email, otp).catch(emailErr => {
-      console.error("Background email dispatch failed:", emailErr);
-    });
-
   } catch (err) {
     console.error("Login Step 1 error:", err);
     res.status(500).json({ error: "Internal server error during authentication" });
   }
 };
 
-// 3. LOGIN STEP 2: VERIFY OTP AND ESTABLISH SESSION
+// 3. LOGIN STEP 2: verify OTP, create session
 exports.verifyOtp = async (req, res) => {
   try {
-    const { email, otp } = req.body;
+    const email = normalizeEmail(req.body.email);
+    const otp = String(req.body.otp || "").trim();
 
     if (!email || !otp) {
       return res.status(400).json({ error: "Email and OTP code are required" });
     }
 
     const users = await sql`
-      SELECT id, full_name, email, role, otp_code, otp_expires_at 
+      SELECT id, full_name, email, role, otp_code, otp_expires_at, otp_attempts
       FROM users WHERE email = ${email}
     `;
-
-    if (users.length === 0) {
-      return res.status(400).json({ error: "User not found" });
-    }
-
     const user = users[0];
 
-    if (!user.otp_code || user.otp_code !== otp.trim()) {
+    if (!user || !user.otp_code) {
+      return res.status(400).json({ error: "Invalid or expired OTP. Please log in again." });
+    }
+
+    if (new Date() > new Date(user.otp_expires_at) || user.otp_attempts >= MAX_ATTEMPTS) {
+      await sql`UPDATE users SET otp_code = NULL, otp_expires_at = NULL, otp_attempts = 0 WHERE id = ${user.id}`;
+      return res.status(400).json({ error: "OTP expired or too many attempts. Please log in again." });
+    }
+
+    if (!codesMatch(otp, user.otp_code)) {
+      await sql`UPDATE users SET otp_attempts = otp_attempts + 1 WHERE id = ${user.id}`;
       return res.status(400).json({ error: "Invalid OTP code" });
     }
 
-    if (new Date() > new Date(user.otp_expires_at)) {
-      return res.status(400).json({ error: "OTP code has expired. Please log in again." });
-    }
+    await sql`UPDATE users SET otp_code = NULL, otp_expires_at = NULL, otp_attempts = 0 WHERE id = ${user.id}`;
 
-    // Clear OTP so it cannot be reused
-    await sql`
-      UPDATE users 
-      SET otp_code = NULL, otp_expires_at = NULL 
-      WHERE id = ${user.id}
-    `;
-
-    // Establish secure session
-    req.session.user = {
-      id: user.id,
-      full_name: user.full_name,
-      email: user.email,
-      role: user.role
-    };
-
-    res.status(200).json({
-      message: "Authentication successful!",
-      redirectUrl: "/dashboard.html"
+    // New session ID on login prevents session fixation
+    req.session.regenerate((err) => {
+      if (err) {
+        console.error("Session regenerate error:", err);
+        return res.status(500).json({ error: "Could not create session" });
+      }
+      req.session.user = {
+        id: user.id,
+        full_name: user.full_name,
+        email: user.email,
+        role: user.role,
+      };
+      req.session.save((saveErr) => {
+        if (saveErr) {
+          console.error("Session save error:", saveErr);
+          return res.status(500).json({ error: "Could not save session" });
+        }
+        res.status(200).json({
+          message: "Authentication successful!",
+          redirectUrl: "/dashboard.html",
+        });
+      });
     });
   } catch (err) {
     console.error("OTP verification error:", err);
@@ -140,7 +154,86 @@ exports.verifyOtp = async (req, res) => {
   }
 };
 
-// 4. LOGOUT USER
+// 4. FORGOT PASSWORD: send reset code (same response whether or not the email exists)
+exports.forgotPassword = async (req, res) => {
+  const generic = { message: "If that email is registered, a reset code has been sent." };
+  try {
+    const email = normalizeEmail(req.body.email);
+    if (!email) return res.status(400).json({ error: "Email is required" });
+
+    const users = await sql`SELECT id, email FROM users WHERE email = ${email}`;
+    if (users.length > 0) {
+      const code = generateCode();
+      await sql`
+        UPDATE users
+        SET reset_code_hash = ${hashCode(code)},
+            reset_expires_at = ${new Date(Date.now() + RESET_TTL)},
+            reset_attempts = 0
+        WHERE id = ${users[0].id}
+      `;
+      try {
+        await sendResetEmail(users[0].email, code);
+      } catch (emailErr) {
+        console.error("Reset email failed:", emailErr.code, emailErr.message);
+      }
+    }
+    res.status(200).json(generic);
+  } catch (err) {
+    console.error("Forgot password error:", err);
+    res.status(500).json({ error: "Something went wrong. Please try again." });
+  }
+};
+
+// 5. RESET PASSWORD: verify code and set new password
+exports.resetPassword = async (req, res) => {
+  try {
+    const email = normalizeEmail(req.body.email);
+    const code = String(req.body.code || "").trim();
+    const { newPassword } = req.body;
+
+    if (!email || !code || !newPassword) {
+      return res.status(400).json({ error: "Email, code and new password are required" });
+    }
+    if (!validPassword(newPassword)) {
+      return res.status(400).json({ error: "Password must be at least 8 characters" });
+    }
+
+    const users = await sql`
+      SELECT id, reset_code_hash, reset_expires_at, reset_attempts
+      FROM users WHERE email = ${email}
+    `;
+    const user = users[0];
+    const invalid = { error: "Invalid or expired reset code" };
+
+    if (!user || !user.reset_code_hash) return res.status(400).json(invalid);
+
+    if (new Date() > new Date(user.reset_expires_at) || user.reset_attempts >= MAX_ATTEMPTS) {
+      await sql`UPDATE users SET reset_code_hash = NULL, reset_expires_at = NULL, reset_attempts = 0 WHERE id = ${user.id}`;
+      return res.status(400).json(invalid);
+    }
+
+    if (!codesMatch(code, user.reset_code_hash)) {
+      await sql`UPDATE users SET reset_attempts = reset_attempts + 1 WHERE id = ${user.id}`;
+      return res.status(400).json(invalid);
+    }
+
+    const hashed = await bcrypt.hash(newPassword, 10);
+    await sql`
+      UPDATE users
+      SET password = ${hashed},
+          reset_code_hash = NULL, reset_expires_at = NULL, reset_attempts = 0,
+          otp_code = NULL, otp_expires_at = NULL, otp_attempts = 0
+      WHERE id = ${user.id}
+    `;
+
+    res.status(200).json({ message: "Password reset successful. You can now log in." });
+  } catch (err) {
+    console.error("Reset password error:", err);
+    res.status(500).json({ error: "Could not reset password" });
+  }
+};
+
+// 6. LOGOUT
 exports.logout = (req, res) => {
   req.session.destroy((err) => {
     if (err) {
@@ -152,7 +245,7 @@ exports.logout = (req, res) => {
   });
 };
 
-// 5. GET PROTECTED DASHBOARD DATA
+// 7. DASHBOARD DATA
 exports.getDashboardData = async (req, res) => {
   try {
     if (!req.session || !req.session.user) {
@@ -164,21 +257,12 @@ exports.getDashboardData = async (req, res) => {
     `;
 
     if (!user) {
-      return res.session.destroy(() => {
+      return req.session.destroy(() => {
         res.status(401).json({ error: "User session invalid or expired." });
       });
     }
 
-    res.status(200).json({
-      message: "Authorized",
-      user: {
-        id: user.id,
-        full_name: user.full_name,
-        email: user.email,
-        role: user.role,
-        created_at: user.created_at
-      }
-    });
+    res.status(200).json({ message: "Authorized", user });
   } catch (err) {
     console.error("Dashboard authorization error:", err);
     res.status(500).json({ error: "Failed to load dashboard data" });
