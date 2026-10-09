@@ -9,7 +9,8 @@ const limiter = (max) =>
     max,
     standardHeaders: true,
     legacyHeaders: false,
-    message: { error: "Too many requests. Please try again later." },
+    message: { error: "Too many requests" },
+    skip: (req, res) => process.env.NODE_ENV !== "production",
   });
 
 router.post("/register", limiter(20), authController.register);
