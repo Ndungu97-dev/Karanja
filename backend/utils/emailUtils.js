@@ -1,20 +1,24 @@
 const nodemailer = require("nodemailer");
 
-const port = Number(process.env.SMTP_PORT || 465);
-
 const transporter = nodemailer.createTransport({
   host: process.env.SMTP_HOST,
-  port,
-  secure: port === 465,
-  auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
-  connectionTimeout: 15000,
-  greetingTimeout: 15000,
-  socketTimeout: 20000,
+  port: Number(process.env.SMTP_PORT || 587),
+  secure: Number(process.env.SMTP_PORT || 587) === 465,
+  auth: {
+    user: process.env.SMTP_USER,
+    pass: process.env.SMTP_PASS,
+  },
+  connectionTimeout: 5000,
+  socketTimeout: 5000,
 });
 
-transporter.verify((err) => {
-  if (err) console.error("❌ SMTP verify failed:", err.code, err.message);
-  else console.log("✅ SMTP ready");
+// Test connection
+transporter.verify((err, success) => {
+  if (err) {
+    console.error("SMTP Error:", err.code);
+  } else {
+    console.log("SMTP Ready");
+  }
 });
 
 const template = (title, intro, code, note) => `
@@ -26,16 +30,20 @@ const template = (title, intro, code, note) => `
   </div>`;
 
 async function send(to, subject, html, text) {
-  if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
-    throw new Error("Missing SMTP credentials");
+  try {
+    const info = await transporter.sendMail({
+      from: `"Karanja" <${process.env.SMTP_USER}>`,
+      to,
+      subject,
+      text,
+      html,
+    });
+    console.log("Email sent:", info.messageId);
+    return info;
+  } catch (error) {
+    console.error("Email error:", error.code, error.message);
+    throw error;
   }
-  return transporter.sendMail({
-    from: `"Your App" <${process.env.SMTP_USER}>`,
-    to,
-    subject,
-    text,
-    html,
-  });
 }
 
 exports.sendOtpEmail = (to, otp) =>
@@ -44,7 +52,7 @@ exports.sendOtpEmail = (to, otp) =>
     "Your login verification code",
     template("Security Verification", "Use this code to complete your login:", otp,
       "Valid for 10 minutes. Never share this code."),
-    `Your login code is ${otp}. It expires in 10 minutes.`
+    `Login code: ${otp}`
   );
 
 exports.sendResetEmail = (to, code) =>
@@ -53,5 +61,5 @@ exports.sendResetEmail = (to, code) =>
     "Password reset code",
     template("Reset Your Password", "Use this code to reset your password:", code,
       "Valid for 15 minutes. If you didn't request this, ignore this email."),
-    `Your password reset code is ${code}. It expires in 15 minutes.`
+    `Reset code: ${code}`
   );
